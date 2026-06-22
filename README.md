@@ -56,8 +56,9 @@ Each is detailed in the linked package; this is the index.
 
 **Vendoring & project status**
 - Vendored `core`/`codepage` are **detached snapshots** at recorded SHAs (not `git subtree`); re-sync is manual. → [`VENDOR.md`](./VENDOR.md)
-- **Not yet published** to npm (`0.0.0`). The `0.1.0` release (changeset + GitHub workflow) needs a token with `workflow` scope.
-- **Not yet verified on physical hardware / a real browser** — spikes + the preview prove the bytes in software; on-device printing is unconfirmed.
+- **Not yet published** to npm (`0.0.0`) — no `0.1.0` changeset staged yet. CI workflows are in place (print-agent cross-build is pushed).
+- **Not yet verified on physical hardware / a real browser** — spikes + the preview prove the bytes in software; on-device printing (XP-365B, live Web Serial/BLE, the Windows agent) is unconfirmed. **This is the main open gap.**
+- Only the **macOS arm64** print-agent binary is committed; Windows/Linux/Intel come from the release CI (untagged so far). Signed installers need code-signing certs (paid).
 
 ## Status
 v0.2 (unreleased) — 10 packages, `pnpm check` green (typecheck + build + spike per package). Spike-driven: JSX→real ESC/POS bytes, RN-safe, library-agnostic transports, Sinhala/Tamil raster, byte→image preview, web/RN/Node + network transports. Decisions in `chittie-build-implementation-notes.md` and `chittie-refactor-implementation-notes.md`.

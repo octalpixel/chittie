@@ -40,6 +40,7 @@ Promoted the `examples/preview` proto into a real package. Parses chittie's ESC/
 
 ### Remaining deferrals (after this pass)
 - **WebUSB per-device endpoint tuning** — `createWebUsbTransport` claims the first OUT endpoint; some devices need a specific interface/endpoint.
-- **0.1.0 release** — changeset + pushing `.github/workflows/release.yml` (needs a token with `workflow` scope; currently local-only).
+- **0.1.0 release** — create a changeset + push `.github/workflows/release.yml` (changesets) + `npm publish`. NOTE: the `workflow`-scope blocker is RESOLVED — `print-agent-release.yml` pushed fine, so the token now has scope. Just not done yet.
+- **Print-agent binaries** — only macOS arm64 is committed; tag `print-agent-v*` to run the cross-build CI for Windows/Linux/Intel. Signed installers need code-signing certs (Windows ~$120/yr, macOS $99/yr — paid).
 - **Real-hardware / real-browser verification** — spikes + the preview prove the bytes in software; printing on a physical XP-365B and live Web Serial/BLE in a browser is the user's confirm step.
 - (minor) chittie-text Arabic-shaping nuance (chars that *encode* in a codepage but render unshaped) is out of scope; Sinhala/Tamil (no codepage) are fully handled.
