@@ -35,6 +35,9 @@ importers:
       '@angadie/chittie':
         specifier: workspace:*
         version: link:../../packages/chittie
+      '@angadie/chittie-preview':
+        specifier: workspace:*
+        version: link:../../packages/chittie-preview
       '@angadie/chittie-text':
         specifier: workspace:*
         version: link:../../packages/chittie-text
@@ -120,6 +123,18 @@ importers:
       resize-image-data:
         specifier: ^0.3.1
         version: 0.3.1
+
+  packages/chittie-preview:
+    devDependencies:
+      '@angadie/chittie':
+        specifier: workspace:*
+        version: link:../chittie
+      '@angadie/chittie-text':
+        specifier: workspace:*
+        version: link:../chittie-text
+      '@canvas/image-data':
+        specifier: ^1.1.0
+        version: 1.1.0
 
   packages/chittie-react:
     dependencies:

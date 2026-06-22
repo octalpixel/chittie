@@ -4,6 +4,7 @@ Decisions: keep vendored JS (already fully typed via .d.ts; we're a detached sna
 
 ## Doing
 (complete)
+- chittie-preview package + node-thermal-printer comparison ✓
 
 ## Backlog
 - READMEs: all 8 packages + root usage

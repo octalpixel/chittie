@@ -29,3 +29,17 @@ This is a byte-generation library; runtime schema validation adds a dependency f
 
 ## Verification
 `pnpm check` = `pnpm -r typecheck && build && test` → **10/10 typecheck** (8 packages + 2 examples), all builds, all spikes. chittie-text spike proves detect/raster-route/no-`?`; chittie-react spike proves `<Text>` Sinhala → `GS v 0` image with a rasterizer and throws without one.
+
+## chittie-preview (promoted from proto) + node-thermal-printer comparison
+
+### node-thermal-printer (firsthand, Klemen1337/node-thermal-printer @ 918★)
+Node-only: deps `fs`/`net`/`Buffer`/`pngjs`/`iconv-lite`/`unorm`. Transports = File (device/share via fs), Network (TCP `net.connect` to IP:9100), OS-Printer. Builder API, no JSX. `printImage(path)` via fs+pngjs (you supply a PNG). No Web Serial/USB/BLE, no React Native, no automatic complex-script handling, no preview. **Verdict: overlaps on "emit ESC/POS" but targets server/desktop; chittie targets browser+RN client + DX (JSX) + auto Sinhala/Tamil raster + preview. Does NOT change the plan** — it's the better pick for pure Node backend printing; chittie owns the client/non-Latin niche.
+
+### @angadie/chittie-preview
+Promoted the `examples/preview` proto into a real package. Parses chittie's ESC/POS into draw ops on an **injected canvas** (browser `HTMLCanvasElement` or `@napi-rs/canvas`) — no canvas dependency, same injection pattern as chittie-text. Handles **both image modes**: column `ESC *` (chittie's DEFAULT) and raster `GS v 0`. Barcode (`GS k`) and QR (`GS ( k`) bytes are parsed for length and skipped (labelled placeholder box) so the stream never desyncs — proven by a spike that puts `TOTAL` *after* a barcode and asserts it still renders. The example now dogfoods the package (default column mode); `pnpm check` = 11/11 typecheck, 11 spikes.
+
+### Remaining deferrals (after this pass)
+- **WebUSB per-device endpoint tuning** — `createWebUsbTransport` claims the first OUT endpoint; some devices need a specific interface/endpoint.
+- **0.1.0 release** — changeset + pushing `.github/workflows/release.yml` (needs a token with `workflow` scope; currently local-only).
+- **Real-hardware / real-browser verification** — spikes + the preview prove the bytes in software; printing on a physical XP-365B and live Web Serial/BLE in a browser is the user's confirm step.
+- (minor) chittie-text Arabic-shaping nuance (chars that *encode* in a codepage but render unshaped) is out of scope; Sinhala/Tamil (no codepage) are fully handled.
