@@ -72,3 +72,21 @@ assert.equal(typeof document, 'undefined', 'no DOM');
 console.log('✓ chittie-react JSX→bytes spike —', bytes.length, 'bytes');
 console.log('  init ✓ drawer ✓ cut ✓ text ✓ barcode ✓ qrcode ✓');
 console.log('  rendered with Buffer & TextEncoder nulled, no DOM, no react-dom → RN-safe');
+
+// --- chittie-text integration: Sinhala routes to raster / throws without one ---
+import ImageData from '@canvas/image-data';
+const sinhala = (
+  <Printer width={32}>
+    <Text align="center">ආයුබෝවන්</Text>
+  </Printer>
+);
+// with an injected rasterizer -> image bytes (GS v 0)
+const rasterized = render(sinhala, {
+  rasterizer: {
+    rasterize: () => new ImageData(new Uint8ClampedArray(16 * 8 * 4), 16, 8) as unknown as ImageData,
+  },
+});
+assert.ok(contains(rasterized, [0x1d, 0x76, 0x30]) || contains(rasterized, [0x1b, 0x2a]), 'Sinhala rasterized to image');
+// without a rasterizer -> throws, never a silent "?"
+assert.throws(() => render(sinhala), /rasterizer/, 'Sinhala without rasterizer throws');
+console.log('✓ chittie-text wired: <Text> Sinhala → image with rasterizer, throws without (no silent ?)');

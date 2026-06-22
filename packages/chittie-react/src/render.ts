@@ -1,10 +1,15 @@
 import { Children, isValidElement, type ReactElement, type ReactNode } from 'react';
 import ReceiptPrinterEncoder from '@angadie/chittie-core';
+import type { Codepage, TextRasterizer } from '@angadie/chittie-text';
 import { isPrintable, type Encoder, type RenderContext } from './printable.js';
 
 export interface RenderOptions {
   /** Characters per line; overridden by <Printer width>. */
   columns?: number;
+  /** Supply to print non-encodable scripts (Sinhala/Tamil/…) as images. */
+  rasterizer?: TextRasterizer;
+  /** Code page used to decide what's encodable as text (default cp437). */
+  codepage?: Codepage;
 }
 
 /**
@@ -16,7 +21,7 @@ export function render(element: ReactElement, options: RenderOptions = {}): Uint
   const columns = props.width ?? options.columns ?? 48;
   const encoder = new ReceiptPrinterEncoder({ columns });
   encoder.initialize();
-  walk(props.children, encoder, { columns });
+  walk(props.children, encoder, { columns, rasterizer: options.rasterizer, codepage: options.codepage });
   return encoder.encode();
 }
 

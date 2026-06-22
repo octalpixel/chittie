@@ -67,9 +67,29 @@ importers:
       '@angadie/chittie-core':
         specifier: workspace:*
         version: link:../chittie-core
+      '@angadie/chittie-text':
+        specifier: workspace:*
+        version: link:../chittie-text
       react:
         specifier: ^18 || ^19
         version: 19.2.7
+    devDependencies:
+      '@canvas/image-data':
+        specifier: ^1.1.0
+        version: 1.1.0
+
+  packages/chittie-text:
+    dependencies:
+      '@angadie/chittie-codepage':
+        specifier: workspace:*
+        version: link:../chittie-codepage
+    devDependencies:
+      '@angadie/chittie-core':
+        specifier: workspace:*
+        version: link:../chittie-core
+      '@canvas/image-data':
+        specifier: ^1.1.0
+        version: 1.1.0
 
   packages/chittie-transport: {}
 

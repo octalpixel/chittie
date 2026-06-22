@@ -1,4 +1,5 @@
 import ReceiptPrinterEncoder from '@angadie/chittie-core';
+import type { Codepage, TextRasterizer } from '@angadie/chittie-text';
 
 /** The vendored builder instance the components drive. */
 export type Encoder = InstanceType<typeof ReceiptPrinterEncoder>;
@@ -6,6 +7,10 @@ export type Encoder = InstanceType<typeof ReceiptPrinterEncoder>;
 /** Render-time context threaded to every component's print(). */
 export interface RenderContext {
   columns: number;
+  /** When set, <Text> with non-encodable scripts (Sinhala/Tamil/…) is rasterized. */
+  rasterizer?: TextRasterizer;
+  /** Code page used to decide what's encodable as text (default cp437). */
+  codepage?: Codepage;
 }
 
 /** A component that knows how to emit itself onto the encoder. */

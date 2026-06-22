@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { BarcodeSymbology } from '@angadie/chittie-core';
+import { smartText } from '@angadie/chittie-text';
 import type { Encoder, Printable, RenderContext } from './printable.js';
 
 export type Alignment = 'left' | 'center' | 'right';
@@ -43,13 +44,19 @@ export interface TextProps {
   inline?: boolean;
   children?: ReactNode;
 }
-export const Text = printable<TextProps>((e, p) => {
+export const Text = printable<TextProps>((e, p, ctx) => {
   if (p.align) e.align(p.align);
   if (p.bold) e.bold(true);
   if (p.underline) e.underline(p.underline);
   if (p.invert) e.invert(true);
   if (p.size) e.size(p.size.width, p.size.height);
-  e.text(toText(p.children));
+  // smartText prints code-page text, or rasterizes complex scripts when a
+  // rasterizer is supplied — and throws (never silent "?") when it isn't.
+  smartText(e, toText(p.children), {
+    rasterizer: ctx.rasterizer,
+    codepage: ctx.codepage,
+    raster: { bold: p.bold, fontSize: p.size ? p.size.height * 24 : undefined },
+  });
   if (!p.inline) e.newline();
   if (p.size) e.size(1, 1);
   if (p.invert) e.invert(false);
