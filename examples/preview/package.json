@@ -1,0 +1,13 @@
+{
+  "name": "@angadie/example-preview",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "preview": "node receipt-to-png.mjs" },
+  "dependencies": {
+    "@angadie/chittie": "workspace:*",
+    "@angadie/chittie-text": "workspace:*",
+    "@canvas/image-data": "^1.1.0",
+    "@napi-rs/canvas": "^0.1.65"
+  }
+}

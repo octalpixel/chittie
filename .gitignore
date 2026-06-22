@@ -8,3 +8,6 @@ coverage/
 
 # Upstream MIT repos cloned for reference/migration (vendored code is copied into packages/* with attribution)
 mit-catalog/
+
+# generated preview output
+examples/preview/*.png
