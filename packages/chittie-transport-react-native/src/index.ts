@@ -53,8 +53,11 @@ export function toBase64(data: Uint8Array): string {
   return out;
 }
 
-/** Bytes to a plain integer array — for libraries whose write takes number[]: react-native-ble-manager. */
+/** Bytes to a plain integer array — for libraries whose write takes number[]: react-native-ble-manager, iMin `sendRAWData`. */
 export const toByteArray = (data: Uint8Array): number[] => Array.from(data);
+
+/** Bytes to a lowercase hex string — for libraries whose write takes hex: iMin `sendRAWDataHexStr`, Classic-BT hex encoding. */
+export const toHex = (data: Uint8Array): string => Array.from(data, (b) => b.toString(16).padStart(2, '0')).join('');
 
 /**
  * BLE convenience: same as createTransport but with sane MTU-chunking defaults.

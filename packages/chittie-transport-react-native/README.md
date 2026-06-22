@@ -63,16 +63,40 @@ const transport = createBleTransport((bytes) =>
 ## Other backends
 
 - **Network (Wi-Fi/LAN, both platforms):** `react-native-tcp-socket` — `socket.write(bytes)` takes a `Uint8Array` directly (no helper). Use `createTransport`.
-- **Built-in printers (Sunmi, iMin — Android POS devices):** they print via a device service, not Bluetooth, and accept raw bytes: `createBleTransport`/`createTransport` with `write: (b) => SunmiV2Printer.sendRAWData(toBase64(b))` (or iMin `PrinterImin.sendRAWData(b)`). Their ESC/POS dialect deviates slightly — test cut/QR.
+- **Built-in printers (Sunmi, iMin):** see the dedicated section below.
 - **Epson via `react-native-esc-pos-printer`:** exposes `addCommand(Uint8Array)` — can serve as a transport for chittie bytes.
+
+## Built-in printers — Sunmi & iMin (Android POS devices)
+
+These print through an on-device **service** (Sunmi AIDL `IWoyouService`, iMin SDK), **not** Bluetooth or network — so there's no scan/connect; you init the device's printer and push bytes. **Android-only.**
+
+**They accept standard ESC/POS via `sendRAWData`** — Sunmi's docs state it "supports ESC/POS instruction sets" (a documented *subset*), and you can send "already prepared ESC/POS commands." So drive the receipt **body** (text, alignment, rules) with chittie:
+
+```ts
+// iMin — sendRAWData takes number[]
+import { createTransport, toByteArray, toHex } from '@angadie/chittie-transport-react-native';
+const transport = createTransport({ write: (b) => PrinterImin.sendRAWData(toByteArray(b)) });
+//                      …or the hex sink: write: (b) => PrinterImin.sendRAWDataHexStr(toHex(b))
+
+// Sunmi — wrapper-dependent; common wrappers take a base64 string
+const transport = createTransport({ write: (b) => SunmiPrinter.sendRAWData(toBase64(b)) });
+```
+
+**Use the device SDK's own methods for cut, QR, and images** — not because the dialect is non-standard, but because:
+- **Cut** is a dedicated call (`cutPaper()` / iMin `fullCut`/`partialCut`) and needs a **hardware cutter** — many handhelds have none, so raw `GS V` does nothing.
+- **Images** go through the SDK's **Bitmap** API (`printBitmap` / iMin `printSingleBitmap`), not guaranteed via chittie's raster bytes.
+- **QR** has a dedicated call (`printQRCode` / `printQrCode`); raw `GS ( k` isn't guaranteed in the subset.
+
+So: chittie builds the text body → `sendRAWData`; call the SDK for the cut, a QR, or a logo bitmap.
 
 ## API
 
 ```ts
 createTransport(adapter: { connect?; write(Uint8Array); disconnect? }, options?): Transport
 createBleTransport(write, options?): Transport   // chunkSize 180, chunkDelayMs 20 defaults
-toBase64(Uint8Array): string
-toByteArray(Uint8Array): number[]
+toBase64(Uint8Array): string      // ble-plx, bluetooth-classic, Sunmi sendRAWData (wrappers that take base64)
+toByteArray(Uint8Array): number[] // ble-manager, iMin sendRAWData
+toHex(Uint8Array): string         // iMin sendRAWDataHexStr, Classic-BT hex
 BLE_DEFAULT_CHUNK: 180
 ```
 
