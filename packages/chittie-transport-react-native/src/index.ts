@@ -30,6 +30,32 @@ export function createTransport(adapter: RNAdapter, options: CreateTransportOpti
 /** Conservative BLE default: many BLE printers accept ~180-byte writes. */
 export const BLE_DEFAULT_CHUNK = 180;
 
+const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+/**
+ * Encode bytes to base64 — pure JS, no Buffer/btoa (RN-safe). Use for libraries
+ * whose write takes a base64 string: react-native-ble-plx, react-native-bluetooth-classic,
+ * Sunmi/iMin `sendRAWData`.
+ */
+export function toBase64(data: Uint8Array): string {
+  let out = '';
+  for (let i = 0; i < data.length; i += 3) {
+    const b0 = data[i]!;
+    const b1 = data[i + 1];
+    const b2 = data[i + 2];
+    const triple = (b0 << 16) | ((b1 ?? 0) << 8) | (b2 ?? 0);
+    out +=
+      B64[(triple >> 18) & 63] +
+      B64[(triple >> 12) & 63] +
+      (b1 === undefined ? '=' : B64[(triple >> 6) & 63]) +
+      (b2 === undefined ? '=' : B64[triple & 63]);
+  }
+  return out;
+}
+
+/** Bytes to a plain integer array — for libraries whose write takes number[]: react-native-ble-manager. */
+export const toByteArray = (data: Uint8Array): number[] => Array.from(data);
+
 /**
  * BLE convenience: same as createTransport but with sane MTU-chunking defaults.
  * Pass your library's characteristic-write as `write`.

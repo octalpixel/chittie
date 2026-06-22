@@ -2,7 +2,7 @@
 // (any BLE/Classic/TCP lib) gets wrapped + MTU-chunked, connect/disconnect
 // forwarded. No RN/Bluetooth library is imported.
 import assert from 'node:assert/strict';
-import { createTransport, createBleTransport, BLE_DEFAULT_CHUNK } from '../src/index.js';
+import { createTransport, createBleTransport, BLE_DEFAULT_CHUNK, toBase64, toByteArray } from '../src/index.js';
 
 const big = new Uint8Array(400).map((_, i) => i % 256);
 const writes: number[][] = [];
@@ -35,4 +35,9 @@ const ble = createBleTransport(async (d) => {
 await ble.write(new Uint8Array(500));
 assert.equal(bleWrites.length, Math.ceil(500 / BLE_DEFAULT_CHUNK), 'BLE default chunk applied');
 
-console.log('✓ chittie-transport-react-native spike — generic adapter + BLE chunking, library-agnostic');
+// encoding helpers — for the cross-platform BLE libs
+assert.equal(toBase64(Uint8Array.from([72, 105])), 'SGk=', 'toBase64 ("Hi") — for react-native-ble-plx');
+assert.equal(toBase64(Uint8Array.from([0x1b, 0x40, 0x41])), 'G0BB', 'toBase64 (ESC @ A) round-trips raw bytes');
+assert.deepEqual(toByteArray(Uint8Array.from([1, 2, 255])), [1, 2, 255], 'toByteArray — for react-native-ble-manager');
+
+console.log('✓ chittie-transport-react-native spike — generic adapter + BLE chunking + base64/byteArray helpers');
