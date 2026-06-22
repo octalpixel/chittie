@@ -141,3 +141,38 @@ export function createWebUsbTransport(options: WebUsbOptions = {}): Transport {
     },
   };
 }
+
+/** Print-agent bridge — POST bytes to a localhost agent that drives a USB/queue printer. */
+export interface BridgeOptions {
+  /** Agent base URL (default `http://localhost:8930`). */
+  url?: string;
+  /** Shared secret — sent as the `x-agent-token` header if set. */
+  token?: string;
+  /** Target OS print queue / `usb`; the agent's default if omitted. */
+  printer?: string;
+}
+
+/**
+ * Transport that POSTs ESC/POS bytes to the chittie print-agent (`tools/print-agent`)
+ * — the way a browser reaches a USB printer-class device (or any OS queue) that it
+ * can't open directly. `connect()` pings `/health`; `write()` POSTs to `/print`.
+ */
+export function createBridgeTransport(options: BridgeOptions = {}): Transport {
+  const base = (options.url ?? 'http://localhost:8930').replace(/\/+$/, '');
+  const headers: Record<string, string> = { 'content-type': 'application/json' };
+  if (options.token) headers['x-agent-token'] = options.token;
+  return {
+    async connect() {
+      const res = await fetch(`${base}/health`);
+      if (!res.ok) throw new Error(`chittie: print agent not reachable at ${base} (HTTP ${res.status}).`);
+    },
+    async write(data) {
+      const body = JSON.stringify({
+        bytes: Array.from(data),
+        ...(options.printer ? { printer: options.printer } : {}),
+      });
+      const res = await fetch(`${base}/print`, { method: 'POST', headers, body });
+      if (!res.ok) throw new Error(`chittie: print agent /print failed (HTTP ${res.status}).`);
+    },
+  };
+}

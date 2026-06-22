@@ -2,7 +2,7 @@
 // a mocked navigator.serial (connect requests/opens a port; write goes to the
 // writer; bytes arrive intact).
 import assert from 'node:assert/strict';
-import { createWebSerialTransport } from '../src/index.js';
+import { createWebSerialTransport, createBridgeTransport } from '../src/index.js';
 
 const writes: number[][] = [];
 let opened = false;
@@ -46,3 +46,26 @@ await t.disconnect!();
 assert.ok(closed, 'port closed on disconnect');
 
 console.log('✓ chittie-transport-web spike — Web Serial connect/write/disconnect against mock navigator.serial');
+
+// --- bridge transport: POSTs to the print-agent contract (mock fetch) ---
+const fetchCalls: Array<{ url: string; init?: { method?: string; headers?: Record<string, string>; body?: string } }> = [];
+Object.defineProperty(globalThis, 'fetch', {
+  configurable: true,
+  value: async (url: string, init?: { method?: string; headers?: Record<string, string>; body?: string }) => {
+    fetchCalls.push({ url: String(url), init });
+    return { ok: true, status: 200 } as Response;
+  },
+});
+
+const bridge = createBridgeTransport({ url: 'http://localhost:8930/', token: 'secret', printer: 'usb' });
+await bridge.connect!();
+await bridge.write(new Uint8Array([0x1b, 0x40, 0x41]));
+
+assert.ok(fetchCalls[0]!.url.endsWith('/health'), 'connect() pings /health');
+assert.ok(fetchCalls[1]!.url.endsWith('/print'), 'write() POSTs /print');
+assert.equal(fetchCalls[1]!.init?.method, 'POST');
+assert.equal(fetchCalls[1]!.init?.headers?.['x-agent-token'], 'secret', 'token forwarded');
+const sent = JSON.parse(fetchCalls[1]!.init!.body!);
+assert.deepEqual(sent.bytes, [0x1b, 0x40, 0x41], 'bytes sent as number[]');
+assert.equal(sent.printer, 'usb', 'printer forwarded');
+console.log('✓ chittie-transport-web spike — bridge transport POSTs bytes to the print-agent /print contract');

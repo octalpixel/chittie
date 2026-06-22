@@ -37,6 +37,20 @@ const transport = createWebBluetoothTransport({
 });
 ```
 
+## Bridge (USB / network printers a browser can't reach)
+
+Browsers can't open USB printer-class devices or raw TCP. Run the [`chittie print-agent`](../../tools/print-agent) on the terminal and POST bytes to it:
+
+```ts
+import { print } from '@angadie/chittie-transport';
+import { createBridgeTransport } from '@angadie/chittie-transport-web';
+
+const transport = createBridgeTransport({ url: 'http://localhost:8930', token: 'secret', printer: 'usb' });
+await print(transport, bytes); // connect() pings /health, write() POSTs /print
+```
+
+The agent raw-prints to the OS queue (Windows winspool / CUPS) or, in virtual mode, renders a PNG.
+
 ## WebUSB
 
 ```ts
