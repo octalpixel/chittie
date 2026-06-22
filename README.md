@@ -23,7 +23,7 @@ Write a receipt once — as **JSX** or with the **builder** — and print it fro
 - **Vendored, not forked-and-frozen**: see [`VENDOR.md`](./VENDOR.md) for the upstream-sync policy.
 
 ## Status
-Monorepo scaffold. Core + codepage to be vendored; React layer + transports to be built. Not yet published.
+v0.1 — all 7 packages build and pass spikes (`pnpm -r test` / `pnpm -r build`). Verified spike-driven: JSX→real ESC/POS bytes, RN-safe (Buffer/TextEncoder nulled, no react-dom), library-agnostic transports. Not yet published. Next: `chittie-text` Sinhala/Tamil smart-raster, examples, `0.1.0` release. See `chittie-build-implementation-notes.md`.
 
 ## License
 MIT. Vendored code retains its original MIT notices — see [`VENDOR.md`](./VENDOR.md).
