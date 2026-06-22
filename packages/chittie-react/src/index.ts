@@ -10,7 +10,7 @@ export {
   QRCode,
   toText,
   type Alignment,
-  type TextSize,
+  type TextScale,
   type PrinterProps,
   type TextProps,
   type RowProps,

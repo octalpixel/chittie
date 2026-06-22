@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
+import type { BarcodeSymbology } from '@angadie/chittie-core';
 import type { Encoder, Printable, RenderContext } from './printable.js';
 
 export type Alignment = 'left' | 'center' | 'right';
-export type TextSize = { width: number; height: number };
+/** Character magnification (width/height multipliers, e.g. 2 = double). */
+export type TextScale = { width: number; height: number };
 
 /** Pure recursive text extraction — no react-dom, no DOM. */
 export function toText(node: ReactNode): string {
@@ -36,7 +38,7 @@ export interface TextProps {
   bold?: boolean;
   underline?: boolean | number;
   invert?: boolean;
-  size?: TextSize;
+  size?: TextScale;
   /** If true, don't append a newline after the text. */
   inline?: boolean;
   children?: ReactNode;
@@ -46,10 +48,10 @@ export const Text = printable<TextProps>((e, p) => {
   if (p.bold) e.bold(true);
   if (p.underline) e.underline(p.underline);
   if (p.invert) e.invert(true);
-  if (p.size) e.size(p.size);
+  if (p.size) e.size(p.size.width, p.size.height);
   e.text(toText(p.children));
   if (!p.inline) e.newline();
-  if (p.size) e.size({ width: 1, height: 1 });
+  if (p.size) e.size(1, 1);
   if (p.invert) e.invert(false);
   if (p.underline) e.underline(false);
   if (p.bold) e.bold(false);
@@ -105,7 +107,7 @@ export const Cashdraw = printable<CashdrawProps>((e, p) => {
 
 export interface BarcodeProps {
   value: string;
-  symbology?: string | number;
+  symbology?: BarcodeSymbology | number;
   height?: number;
   children?: ReactNode;
 }

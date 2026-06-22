@@ -11,8 +11,8 @@ interface SerialLike {
   getPorts(): Promise<SerialPortLike[]>;
 }
 interface BluetoothCharLike {
-  writeValueWithoutResponse?(d: BufferSource): Promise<void>;
-  writeValue(d: BufferSource): Promise<void>;
+  writeValueWithoutResponse?(d: Uint8Array): Promise<void>;
+  writeValue(d: Uint8Array): Promise<void>;
 }
 interface BluetoothDeviceLike {
   gatt?: {
@@ -29,7 +29,7 @@ interface UsbDeviceLike {
   close(): Promise<void>;
   selectConfiguration(n: number): Promise<void>;
   claimInterface(n: number): Promise<void>;
-  transferOut(endpoint: number, data: BufferSource): Promise<unknown>;
+  transferOut(endpoint: number, data: Uint8Array): Promise<unknown>;
   configuration: { interfaces: { interfaceNumber: number; alternate: { endpoints: UsbEndpointLike[] } }[] } | null;
 }
 interface UsbLike {

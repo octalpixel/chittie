@@ -23,3 +23,9 @@ Built spike-driven (real code → real ESC/POS bytes; RN-safety by nulling Buffe
 - **WebUSB** adapter claims the first OUT endpoint — fine generically but may need per-device tuning.
 - **Release**: changeset for `0.1.0` + the GitHub release workflow push (needs `workflow` token scope; `.github/workflows/release.yml` is on disk, unpushed).
 - **Real-hardware / real-browser** verification (spikes prove bytes + RN-safety in Node; on-device printing is the user's confirm step).
+
+## Post-build type fixes (TS 5.7 + type precision)
+Cursor surfaced real `tsc --noEmit` errors my gate missed — root cause: `pnpm -r build` (tsdown) emits `.d.ts` **without a strict typecheck**, and I'd only run build + spikes. Added a root `check` script (`typecheck && build && test`) so this is gated.
+- **transport-web (TS 5.7 generic TypedArrays):** `Uint8Array` is now `Uint8Array<ArrayBufferLike>`; passing it to my DOM-stub params typed `BufferSource` (= non-shared `ArrayBufferView<ArrayBuffer>`) errored (TS2345, `SharedArrayBuffer` ≠ `ArrayBuffer`). Fix: the stubs are mine and only receive our byte chunks, so I typed the params as `Uint8Array` (widen to what we pass — no cast, no copy). Note `Uint8Array<ArrayBuffer>` would be *wrong* (it'd reject our generic `Uint8Array`).
+- **chittie-react type precision:** added `@types/react`; modeled `<Text size>` against the engine's real `size(width, height)` numeric overload (core's `TextSize` is `"small"|"normal"`, a different concept) — renamed the prop type to `TextScale = {width,height}` and call `e.size(w, h)`; typed `<Barcode symbology>` as the engine's exported `BarcodeSymbology` union (imported from chittie-core) instead of `string`.
+- Runtime unaffected (all spikes still pass); these were type-only.
