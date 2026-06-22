@@ -104,3 +104,23 @@ assert.ok(
   '<Image> emits an image command (padded to /8, no throw)'
 );
 console.log('✓ <Image> renders arbitrary ImageData (auto-padded to 8-multiples)');
+
+// --- custom components: composition as children, .map(), and a custom root ---
+const LineItem = ({ name, qty, price }: { name: string; qty: number; price: number }) => (
+  <Row left={`${qty}x ${name}`} right={`Rs. ${qty * price}`} />
+);
+const cart = [{ name: 'Coffee', qty: 2, price: 425 }, { name: 'Cake', qty: 1, price: 650 }];
+function MyReceipt() {
+  return (
+    <Printer width={32}>
+      <Text align="center" bold>MYSHOP</Text>
+      {cart.map((it, i) => <LineItem key={i} {...it} />)}
+      <Cut />
+    </Printer>
+  );
+}
+const customBytes = render(<MyReceipt />); // custom ROOT resolves to <Printer>
+const customAscii = ascii(customBytes);
+assert.ok(customAscii.includes('MYSHOP'), 'custom root component renders');
+assert.ok(customAscii.includes('Coffee') && customAscii.includes('Cake'), 'mapped child components render');
+console.log('✓ custom components: child composition + .map() + custom root resolves to <Printer>');

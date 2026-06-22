@@ -1,7 +1,24 @@
 import { Children, isValidElement, type ReactElement, type ReactNode } from 'react';
 import ReceiptPrinterEncoder from '@angadie/chittie-core';
 import type { Codepage, TextRasterizer } from '@angadie/chittie-text';
+import { Printer } from './components.js';
 import { isPrintable, type Encoder, type RenderContext } from './printable.js';
+
+/**
+ * Resolve a custom function-component root down to the <Printer> element it
+ * returns, so a whole receipt can be authored as one component:
+ * `render(<MyReceipt items={…} />)`. Stops at <Printer> or any printable.
+ */
+function resolveRoot(element: ReactElement): ReactElement {
+  let current: ReactNode = element;
+  for (let i = 0; i < 100; i++) {
+    if (!isValidElement(current)) break;
+    const type = current.type as unknown;
+    if (type === Printer || isPrintable(type) || typeof type !== 'function') break;
+    current = (type as (props: unknown) => ReactNode)(current.props);
+  }
+  return isValidElement(current) ? current : element;
+}
 
 export interface RenderOptions {
   /** Characters per line; overridden by <Printer width>. */
@@ -17,7 +34,8 @@ export interface RenderOptions {
  * builder. Pure: no react-dom, no DOM host elements.
  */
 export function render(element: ReactElement, options: RenderOptions = {}): Uint8Array {
-  const props = (element.props ?? {}) as { width?: number; children?: ReactNode };
+  const root = resolveRoot(element);
+  const props = (root.props ?? {}) as { width?: number; children?: ReactNode };
   const columns = props.width ?? options.columns ?? 48;
   const encoder = new ReceiptPrinterEncoder({ columns });
   encoder.initialize();

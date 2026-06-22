@@ -59,6 +59,35 @@ render(
 
 User-defined wrapper components are supported — `render` walks function components and fragments.
 
+## Custom components
+
+Compose your own components — they're plain functions returning chittie elements. `render` invokes them and walks their output, so `.map()`, fragments, and conditionals all work:
+
+```tsx
+const LineItem = ({ name, qty, price }: Item) => (
+  <Row left={`${qty}x ${name}`} right={`Rs. ${qty * price}`} />
+);
+
+function Receipt({ items }: { items: Item[] }) {
+  return (
+    <Printer width={48}>
+      <Text align="center" bold>MY SHOP</Text>
+      <Line />
+      {items.map((it) => <LineItem key={it.id} {...it} />)}
+      {items.length === 0 && <Text align="center">No items</Text>}
+      <Cut />
+    </Printer>
+  );
+}
+
+// a whole receipt can be ONE component — render resolves it down to <Printer>
+render(<Receipt items={cart} />);
+```
+
+**Constraints** (it's a pure renderer, not the React reconciler):
+- Components must be pure `props → elements`. **No hooks** (`useState`/`useEffect`/`useContext`) and no `react-dom` — there's no component tree, state, or lifecycle, by design (a receipt is a one-shot render).
+- `<Text>` renders only its *text* children; don't nest other components inside it (`<Text><Row/></Text>` won't work — put `<Row>` as a sibling).
+
 ## Non-Latin scripts (Sinhala / Tamil / …)
 
 `<Text>` content that a code page can't represent is auto-rasterized **when you pass a rasterizer**; otherwise `render` throws (never a silent `?`). See [`@angadie/chittie-text`](../chittie-text).
