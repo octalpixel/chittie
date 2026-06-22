@@ -3,7 +3,7 @@
 Decisions: keep vendored JS (already fully typed via .d.ts; we're a detached snapshot, not subtree). Strong static types, NO zod. chittie-text = new package, injected rasterizer.
 
 ## Doing
-- READMEs: all 8 packages + root
+(complete)
 
 ## Backlog
 - READMEs: all 8 packages + root usage
@@ -15,6 +15,9 @@ Decisions: keep vendored JS (already fully typed via .d.ts; we're a detached sna
 - VENDOR.md corrected (manual snapshot, not subtree)
 - chittie-text package (detect/smartText/no-silent-?) + spike ✓
 - chittie-react integration: render({rasterizer,codepage}) → <Text> auto-routes ✓
+- READMEs: all 8 packages ✓
+- examples: web (Web Serial + canvas rasterizer) + RN (createBleTransport) — both typecheck ✓
+- gate: pnpm check green (10/10 typecheck incl. examples) ✓
 
 ## Invariants
 - chittie-text platform-neutral (no canvas/skia dep; rasterizer injected); RN-safe

@@ -1,0 +1,13 @@
+{
+  "name": "@angadie/example-react-native",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "typecheck": "tsc --noEmit" },
+  "dependencies": {
+    "@angadie/chittie": "workspace:*",
+    "@angadie/chittie-transport": "workspace:*",
+    "@angadie/chittie-transport-react-native": "workspace:*"
+  },
+  "devDependencies": { "react": "^19.1.0", "@types/react": "^19.0.0" }
+}

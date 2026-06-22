@@ -1,0 +1,18 @@
+{
+  "name": "@angadie/example-web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "dev": "vite", "typecheck": "tsc --noEmit" },
+  "dependencies": {
+    "@angadie/chittie": "workspace:*",
+    "@angadie/chittie-transport": "workspace:*",
+    "@angadie/chittie-transport-web": "workspace:*"
+  },
+  "devDependencies": {
+    "react": "^19.1.0",
+    "@types/react": "^19.0.0",
+    "vite": "^5.4.0",
+    "@vitejs/plugin-react": "^4.3.0"
+  }
+}
