@@ -32,8 +32,56 @@ const rasterizer = {
   },
 };
 
+// draw a black-on-white logo (coffee cup + wordmark). Dims are multiples of 8
+// (ESC/POS raster requirement). Returns ImageData for encoder.image().
+function makeLogo() {
+  const W = DOTS; // 384, /8 = 48
+  const H = 152; // /8 = 19
+  const c = createCanvas(W, H);
+  const x = c.getContext('2d');
+  x.fillStyle = '#fff';
+  x.fillRect(0, 0, W, H);
+  x.fillStyle = '#000';
+  x.strokeStyle = '#000';
+  const cx = W / 2;
+  const top = 20;
+  const cupW = 92;
+  const cupH = 52;
+  // cup body (trapezoid)
+  x.beginPath();
+  x.moveTo(cx - cupW / 2, top);
+  x.lineTo(cx + cupW / 2, top);
+  x.lineTo(cx + cupW / 2 - 12, top + cupH);
+  x.lineTo(cx - cupW / 2 + 12, top + cupH);
+  x.closePath();
+  x.fill();
+  // handle
+  x.lineWidth = 9;
+  x.beginPath();
+  x.arc(cx + cupW / 2 + 4, top + cupH / 2 - 4, 16, -Math.PI / 2, Math.PI / 2);
+  x.stroke();
+  // saucer
+  x.fillRect(cx - cupW / 2 - 12, top + cupH + 7, cupW + 24, 8);
+  // steam
+  x.lineWidth = 5;
+  for (const dx of [-18, 0, 18]) {
+    x.beginPath();
+    x.moveTo(cx + dx, top - 16);
+    x.quadraticCurveTo(cx + dx + 9, top - 7, cx + dx, top - 1);
+    x.stroke();
+  }
+  // wordmark
+  x.font = 'bold 32px sans-serif';
+  x.textAlign = 'center';
+  x.textBaseline = 'top';
+  x.fillText('ARTISAN HAUS', cx, top + cupH + 26);
+  const id = x.getImageData(0, 0, W, H);
+  return { img: new ImageData(id.data, W, H), w: W, h: H };
+}
+
+const logo = makeLogo();
 const enc = new ReceiptPrinterEncoder({ columns: COLUMNS }); // default column image mode
-enc.initialize().align('center').bold(true).size(2, 2).line('Artisan Haus').size(1, 1).bold(false);
+enc.initialize().align('center').image(logo.img, logo.w, logo.h, 'threshold', 128).newline();
 enc.align('center');
 smartText(enc, 'ආයුබෝවන්!', { rasterizer }); // Sinhala -> raster image
 enc.newline().align('center').line('Kotte, Colombo').align('left').rule();
