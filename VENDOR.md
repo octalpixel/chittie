@@ -16,8 +16,8 @@ sync path so we can still pull upstream fixes.
 
 | chittie package | Upstream (MIT) | Source SHA | Notes |
 |---|---|---|---|
-| `@angadie/chittie-codepage` | `NielsLeenheer/CodepageEncoder` | _pending_ | zero-dep; expected unchanged |
-| `@angadie/chittie-core` | `NielsLeenheer/ReceiptPrinterEncoder` | _pending_ | image deps to be vetted for RN; images may become optional |
+| `@angadie/chittie-codepage` | `NielsLeenheer/CodepageEncoder` | `08e53e4` | vendored `src/` + `generated/` + `types/index.d.ts`; ships ESM source (no build step); zero-dep ✓ |
+| `@angadie/chittie-core` | `NielsLeenheer/ReceiptPrinterEncoder` | `939d303` | vendored `src/` + `generated/`; codepage import repointed to `@angadie/chittie-codepage`; `structuredClone` shim for Hermes; `@canvas/image-data` ≥1.1.0 |
 
 ## How to re-sync (subtree)
 ```bash

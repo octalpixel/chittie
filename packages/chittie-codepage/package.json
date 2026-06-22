@@ -4,13 +4,18 @@
   "description": "Zero-dependency code-page encoder for thermal printers (vendored from @point-of-sale/codepage-encoder, MIT).",
   "license": "MIT",
   "type": "module",
-  "types": "./dist/index.d.ts",
-  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
-  "files": ["dist"],
+  "types": "./types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./src/index.js"
+    }
+  },
+  "files": ["src", "generated", "types", "LICENSE"],
   "scripts": {
-    "build": "tsdown",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "build": "echo 'chittie-codepage ships ESM source (no build step)'",
+    "typecheck": "echo 'no typecheck (vendored JS + shipped .d.ts)'",
+    "test": "node spikes/encode.spike.mjs"
   },
   "publishConfig": { "access": "public" }
 }
