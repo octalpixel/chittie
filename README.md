@@ -19,6 +19,15 @@ Write a receipt once — as **JSX** or with the **builder** — and print it fro
 | `@angadie/chittie-transport-react-native` | Library-agnostic RN/Expo adapter (bring any BLE/Classic/TCP lib) + encoding helpers. |
 | `@angadie/chittie-transport-node` | Network (LAN) transport — raw TCP to `:9100` for Node / Electron / print-servers. |
 
+## Tools
+
+Non-npm helpers (native binary + browser extension) under [`tools/`](./tools) — not part of the pnpm workspace:
+
+| Tool | What |
+|---|---|
+| [`tools/print-agent`](./tools/print-agent) | Tiny Rust localhost service — raw-prints ESC/POS to a USB/queue printer the browser can't reach (or renders a PNG in virtual mode). Pair with `createBridgeTransport()`. |
+| [`tools/serial-mock`](./tools/serial-mock) | Dev-only Chrome extension — mocks `navigator.serial` to test the Web Serial path without hardware. |
+
 ## Design principles
 - **DX-first**: JSX *and* builder authoring, both → the same ESC/POS bytes.
 - **Runs everywhere**: Buffer-free, UTF-8 default; no `react-dom`; no DOM host elements in the React layer.
