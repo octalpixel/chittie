@@ -37,7 +37,7 @@ Each is detailed in the linked package; this is the index.
 - **WebUSB** claims the first OUT endpoint; some devices need a specific interface/endpoint. → [`transport-web`](./packages/chittie-transport-web)
 
 **Authoring & rendering**
-- **`<Text>` renders only text children** — don't nest components inside it (`<Text><Row/></Text>` won't work). → [`chittie-react`](./packages/chittie-react)
+- **`<Text>` accepts only text** (strings/numbers) — nesting a component (`<Text><Row/></Text>`) **throws a clear error** (put `<Row>`/`<Image>` as siblings). → [`chittie-react`](./packages/chittie-react)
 - **No hooks / no `react-dom`** — components are pure `props → elements` (a receipt is a one-shot render). → [`chittie-react`](./packages/chittie-react)
 - **Non-Latin scripts (Sinhala/Tamil/…)** require an **injected rasterizer**; without one, rendering **throws** (never a silent `?`). Detection is code-page based (default cp437). A script that *encodes* in a code page but needs shaping (e.g. Arabic) is **not** auto-detected — out of scope for now. → [`chittie-text`](./packages/chittie-text)
 - **Raster images** are padded to dimensions that are multiples of 8 (ESC/POS requirement) automatically. → [`chittie-react`](./packages/chittie-react) / [`chittie-text`](./packages/chittie-text)

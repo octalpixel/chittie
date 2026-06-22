@@ -86,7 +86,7 @@ render(<Receipt items={cart} />);
 
 **Constraints** (it's a pure renderer, not the React reconciler):
 - Components must be pure `props → elements`. **No hooks** (`useState`/`useEffect`/`useContext`) and no `react-dom` — there's no component tree, state, or lifecycle, by design (a receipt is a one-shot render).
-- `<Text>` renders only its *text* children; don't nest other components inside it (`<Text><Row/></Text>` won't work — put `<Row>` as a sibling).
+- `<Text>` accepts only **text** (strings/numbers). Nesting a component (`<Text><Row/></Text>`) **throws a clear error** — put `<Row>`, `<Image>`, etc. as siblings. (Fragments wrapping text are fine.)
 
 ## Non-Latin scripts (Sinhala / Tamil / …)
 

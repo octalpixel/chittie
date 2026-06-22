@@ -124,3 +124,14 @@ const customAscii = ascii(customBytes);
 assert.ok(customAscii.includes('MYSHOP'), 'custom root component renders');
 assert.ok(customAscii.includes('Coffee') && customAscii.includes('Cake'), 'mapped child components render');
 console.log('✓ custom components: child composition + .map() + custom root resolves to <Printer>');
+
+// --- regression: <Text> with a COMPONENT child throws (was a silent drop) ---
+assert.throws(
+  () => render(<Printer width={32}><Text bold><Row left="A" right="B" /></Text></Printer>),
+  /components|siblings/,
+  '<Text> with a component child throws instead of silently dropping it'
+);
+// fragments wrapping text are still transparent
+const fragText = render(<Printer width={32}><Text>{'XY'}</Text></Printer>);
+assert.ok(ascii(fragText).includes('XY'), 'string children still render');
+console.log('✓ <Text> rejects component children (no silent drop); strings/fragments still render');

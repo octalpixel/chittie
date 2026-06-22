@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { Fragment, isValidElement, type ReactNode } from 'react';
 import type { BarcodeSymbology, DitherAlgorithm } from '@angadie/chittie-core';
 import { smartText, padTo8 } from '@angadie/chittie-text';
 import type { Encoder, Printable, RenderContext } from './printable.js';
@@ -7,14 +7,23 @@ export type Alignment = 'left' | 'center' | 'right';
 /** Character magnification (width/height multipliers, e.g. 2 = double). */
 export type TextScale = { width: number; height: number };
 
-/** Pure recursive text extraction — no react-dom, no DOM. */
+/**
+ * Pure recursive text extraction — no react-dom, no DOM. Strings/numbers pass
+ * through; fragments are transparent. A component element is a mistake (it would
+ * be silently dropped — its print() never runs from here), so we throw loudly.
+ */
 export function toText(node: ReactNode): string {
   if (node == null || typeof node === 'boolean') return '';
   if (typeof node === 'string') return node;
   if (typeof node === 'number' || typeof node === 'bigint') return String(node);
   if (Array.isArray(node)) return node.map(toText).join('');
-  const el = node as { props?: { children?: ReactNode } };
-  if (el && typeof el === 'object' && el.props) return toText(el.props.children);
+  if (isValidElement(node)) {
+    if (node.type === Fragment) return toText((node.props as { children?: ReactNode }).children);
+    throw new Error(
+      'chittie: <Text> (and <Row>) accept only string/number text, not components. ' +
+        'Put <Row>, <Image>, etc. as siblings — not nested inside <Text>.'
+    );
+  }
   return '';
 }
 
