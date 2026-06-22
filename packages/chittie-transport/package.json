@@ -1,0 +1,16 @@
+{
+  "name": "@angadie/chittie-transport",
+  "version": "0.0.0",
+  "description": "Transport contract for chittie: { connect; write; disconnect } + chunk() helper. Zero runtime deps.",
+  "license": "MIT",
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "publishConfig": { "access": "public" }
+}

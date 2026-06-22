@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.DS_Store
+.turbo/
+*.log
+
+# Upstream MIT repos cloned for reference/migration (vendored code is copied into packages/* with attribution)
+mit-catalog/

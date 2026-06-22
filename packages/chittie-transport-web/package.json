@@ -1,0 +1,19 @@
+{
+  "name": "@angadie/chittie-transport-web",
+  "version": "0.0.0",
+  "description": "Web transports for chittie: Web Serial, WebUSB, Web Bluetooth. Browser platform APIs only.",
+  "license": "MIT",
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@angadie/chittie-transport": "workspace:*"
+  },
+  "publishConfig": { "access": "public" }
+}

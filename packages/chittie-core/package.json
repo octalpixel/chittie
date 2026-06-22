@@ -1,0 +1,19 @@
+{
+  "name": "@angadie/chittie-core",
+  "version": "0.0.0",
+  "description": "ESC/POS + StarLine/StarPRNT receipt encoder (builder API). Vendored from @point-of-sale/receipt-printer-encoder, MIT.",
+  "license": "MIT",
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@angadie/chittie-codepage": "workspace:*"
+  },
+  "publishConfig": { "access": "public" }
+}

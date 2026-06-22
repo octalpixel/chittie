@@ -1,0 +1,23 @@
+{
+  "name": "@angadie/chittie",
+  "version": "0.0.0",
+  "description": "Batteries-included receipt printing: builder + JSX authoring → ESC/POS bytes. Web + React Native. The front door that re-exports chittie-core + chittie-react.",
+  "license": "MIT",
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@angadie/chittie-core": "workspace:*",
+    "@angadie/chittie-react": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18 || ^19"
+  },
+  "publishConfig": { "access": "public" }
+}

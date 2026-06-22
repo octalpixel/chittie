@@ -1,0 +1,22 @@
+{
+  "name": "@angadie/chittie-react",
+  "version": "0.0.0",
+  "description": "Pure JSX receipt authoring → ESC/POS bytes. RN-safe (no react-dom, no HTML host elements). Renders onto chittie-core.",
+  "license": "MIT",
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@angadie/chittie-core": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18 || ^19"
+  },
+  "publishConfig": { "access": "public" }
+}
