@@ -45,10 +45,10 @@ export function toBase64(data: Uint8Array): string {
     const b2 = data[i + 2];
     const triple = (b0 << 16) | ((b1 ?? 0) << 8) | (b2 ?? 0);
     out +=
-      B64[(triple >> 18) & 63] +
-      B64[(triple >> 12) & 63] +
-      (b1 === undefined ? '=' : B64[(triple >> 6) & 63]) +
-      (b2 === undefined ? '=' : B64[triple & 63]);
+      B64.charAt((triple >> 18) & 63) +
+      B64.charAt((triple >> 12) & 63) +
+      (b1 === undefined ? '=' : B64.charAt((triple >> 6) & 63)) +
+      (b2 === undefined ? '=' : B64.charAt(triple & 63));
   }
   return out;
 }
