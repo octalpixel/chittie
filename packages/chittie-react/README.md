@@ -41,6 +41,21 @@ const bytes = render(
 | `<Cashdraw>` | `device` | cash-drawer kick pulse |
 | `<Barcode>` | `value`, `symbology`, `height` | a barcode |
 | `<QRCode>` | `value`, `size`, `model` | a QR code |
+| `<Image>` | `image` (ImageData), `align`, `dither`, `threshold`, `width`, `height` | a raster image (logo, etc.) |
+
+### `<Image>` — logos and bitmaps
+
+Pass `ImageData` (from a `<canvas>`, a decoded PNG, or a rasterizer). Dimensions are auto-padded to multiples of 8 (the ESC/POS raster requirement), so any size works. Use `dither="threshold"` for crisp line-art/logos, or `floydsteinberg`/`atkinson` for photos.
+
+```tsx
+const logo = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height);
+render(
+  <Printer width={48}>
+    <Image image={logo} align="center" dither="threshold" />
+    <Text align="center" bold>ARTISAN HAUS</Text>
+  </Printer>
+);
+```
 
 User-defined wrapper components are supported — `render` walks function components and fragments.
 

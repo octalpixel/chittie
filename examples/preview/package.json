@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "preview": "node receipt-to-png.mjs"
+    "preview": "node receipt-to-png.mjs",
+    "preview:jsx": "tsx receipt-jsx.tsx"
   },
   "dependencies": {
     "@angadie/chittie": "workspace:*",
@@ -12,5 +13,10 @@
     "@canvas/image-data": "^1.1.0",
     "@napi-rs/canvas": "^0.1.65",
     "@angadie/chittie-preview": "workspace:*"
+  },
+  "devDependencies": {
+    "react": "^19.1.0",
+    "@types/react": "^19.0.0",
+    "tsx": "^4.19.2"
   }
 }

@@ -8,6 +8,7 @@ export {
   Cashdraw,
   Barcode,
   QRCode,
+  Image,
   toText,
   type Alignment,
   type TextScale,
@@ -19,6 +20,7 @@ export {
   type CashdrawProps,
   type BarcodeProps,
   type QRCodeProps,
+  type ImageProps,
 } from './components.js';
 export { render, type RenderOptions } from './render.js';
 export type { Encoder, RenderContext } from './printable.js';

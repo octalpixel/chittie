@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import type { BarcodeSymbology } from '@angadie/chittie-core';
-import { smartText } from '@angadie/chittie-text';
+import type { BarcodeSymbology, DitherAlgorithm } from '@angadie/chittie-core';
+import { smartText, padTo8 } from '@angadie/chittie-text';
 import type { Encoder, Printable, RenderContext } from './printable.js';
 
 export type Alignment = 'left' | 'center' | 'right';
@@ -130,4 +130,23 @@ export interface QRCodeProps {
 }
 export const QRCode = printable<QRCodeProps>((e, p) => {
   e.qrcode(p.value, p.model, p.size);
+});
+
+export interface ImageProps {
+  /** Pixel data (from a <canvas>, decoded PNG, or a rasterizer). */
+  image: ImageData;
+  /** Output width/height in dots; default the image's own (padded to /8). */
+  width?: number;
+  height?: number;
+  align?: Alignment;
+  /** Dithering: 'threshold' (crisp line-art/logos) | 'bayer' | 'floydsteinberg' | 'atkinson' (photos). */
+  dither?: DitherAlgorithm;
+  threshold?: number;
+  children?: ReactNode;
+}
+export const Image = printable<ImageProps>((e, p) => {
+  const img = padTo8(p.image); // ESC/POS raster needs dims multiple of 8
+  if (p.align) e.align(p.align);
+  e.image(img, p.width ?? img.width, p.height ?? img.height, p.dither, p.threshold);
+  if (p.align) e.align('left');
 });

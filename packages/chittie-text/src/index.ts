@@ -44,10 +44,11 @@ interface EncoderLike {
 
 /**
  * ESC/POS raster requires dimensions that are multiples of 8. Pad right/bottom
- * with white so any rasterizer's output "just works". Platform-neutral: reuses
- * the input's own ImageData constructor (browser or @canvas/image-data) — no import.
+ * with white so any image "just works". Platform-neutral: reuses the input's own
+ * ImageData constructor (browser or @canvas/image-data) — no import. Exported so
+ * chittie-react's <Image> (and others) reuse the same handling.
  */
-function padTo8(img: ImageData): ImageData {
+export function padTo8(img: ImageData): ImageData {
   const { width: w, height: h } = img;
   const w8 = Math.ceil(w / 8) * 8;
   const h8 = Math.ceil(h / 8) * 8;

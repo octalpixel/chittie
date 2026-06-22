@@ -13,6 +13,7 @@ import {
   Cashdraw,
   Barcode,
   QRCode,
+  Image,
   render,
 } from '../src/index.js';
 
@@ -90,3 +91,16 @@ assert.ok(contains(rasterized, [0x1d, 0x76, 0x30]) || contains(rasterized, [0x1b
 // without a rasterizer -> throws, never a silent "?"
 assert.throws(() => render(sinhala), /rasterizer/, 'Sinhala without rasterizer throws');
 console.log('✓ chittie-text wired: <Text> Sinhala → image with rasterizer, throws without (no silent ?)');
+
+// --- <Image>: arbitrary ImageData (non-8 dims) embeds as a raster image ---
+const logo = new ImageData(new Uint8ClampedArray(20 * 10 * 4).fill(0), 20, 10) as unknown as ImageData; // 20x10, not /8
+const withImage = render(
+  <Printer width={32}>
+    <Image image={logo} align="center" dither="threshold" />
+  </Printer>
+);
+assert.ok(
+  contains(withImage, [0x1b, 0x2a]) || contains(withImage, [0x1d, 0x76, 0x30]),
+  '<Image> emits an image command (padded to /8, no throw)'
+);
+console.log('✓ <Image> renders arbitrary ImageData (auto-padded to 8-multiples)');
