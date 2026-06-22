@@ -20,9 +20,10 @@ assert.equal(needsRaster('මිල: Rs.250'), true, 'mixed Sinhala+Latin needs 
 
 // 2. a fake rasterizer (the injection point) — returns a tiny ImageData
 const fake: TextRasterizer = {
+  // deliberately NOT multiples of 8 — proves smartText pads to ESC/POS raster dims
   rasterize(_text, _opts) {
-    const w = 16;
-    const h = 8;
+    const w = 13;
+    const h = 7;
     return new ImageData(new Uint8ClampedArray(w * h * 4), w, h) as unknown as ImageData;
   },
 };

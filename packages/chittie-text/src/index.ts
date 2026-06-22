@@ -42,6 +42,24 @@ interface EncoderLike {
   image(image: ImageData, width: number, height: number): unknown;
 }
 
+/**
+ * ESC/POS raster requires dimensions that are multiples of 8. Pad right/bottom
+ * with white so any rasterizer's output "just works". Platform-neutral: reuses
+ * the input's own ImageData constructor (browser or @canvas/image-data) — no import.
+ */
+function padTo8(img: ImageData): ImageData {
+  const { width: w, height: h } = img;
+  const w8 = Math.ceil(w / 8) * 8;
+  const h8 = Math.ceil(h / 8) * 8;
+  if (w8 === w && h8 === h) return img;
+  const out = new Uint8ClampedArray(w8 * h8 * 4).fill(255); // white padding
+  for (let y = 0; y < h; y++) {
+    out.set(img.data.subarray(y * w * 4, y * w * 4 + w * 4), y * w8 * 4);
+  }
+  const Ctor = img.constructor as new (data: Uint8ClampedArray, width: number, height: number) => ImageData;
+  return new Ctor(out, w8, h8);
+}
+
 export interface SmartTextOptions {
   rasterizer?: TextRasterizer;
   codepage?: Codepage;
@@ -66,6 +84,6 @@ export function smartText(encoder: EncoderLike, text: string, options: SmartText
         'See https://github.com/octalpixel/chittie — non-Latin scripts must be rastered.'
     );
   }
-  const img = options.rasterizer.rasterize(text, options.raster ?? {});
+  const img = padTo8(options.rasterizer.rasterize(text, options.raster ?? {}));
   encoder.image(img, img.width, img.height);
 }
