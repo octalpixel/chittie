@@ -1,6 +1,6 @@
 {
   "name": "@angadie/chittie-transport-node",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Node/Electron network (LAN) transport for chittie — raw TCP to an ESC/POS printer on port 9100. Zero deps (node:net).",
   "license": "MIT",
   "type": "module",

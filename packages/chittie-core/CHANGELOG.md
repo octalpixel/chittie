@@ -1,5 +1,20 @@
 # @angadie/chittie-core
 
+## 0.2.0
+
+### Minor Changes
+
+- 3af3f74: Fold common typographic punctuation to ASCII before code-page encoding, so
+  receipts no longer throw on ubiquitous characters. `× → x`, `— – − → -`,
+  `' ' → '`, `" " → "`, `… → ...`, `• → *` (the last also avoids cp437's 0x07/BEL).
+  `<Text>` (via `smartText`) and `<Row>` both fold; truly non-Latin scripts
+  (Sinhala/Tamil) still raster or throw as before. New export: `foldTypographic`.
+
+### Patch Changes
+
+- Updated dependencies [3af3f74]
+  - @angadie/chittie-codepage@0.2.0
+
 ## 0.1.1
 
 ### Patch Changes
