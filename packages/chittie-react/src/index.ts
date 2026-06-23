@@ -26,3 +26,5 @@ export { render, PRINTER_PROFILES, type RenderOptions } from './render.js';
 export type { Encoder, RenderContext } from './printable.js';
 // Re-exported for consumers wiring render({ rasterizer }) for Sinhala/Tamil.
 export type { TextRasterizer, RasterOptions, Codepage } from '@angadie/chittie-text';
+// Receipt content helpers — RN-safe money formatting (no Intl), text utilities.
+export { formatMoney, foldTypographic, sanitizeControl, needsRaster, type MoneyOptions } from '@angadie/chittie-text';

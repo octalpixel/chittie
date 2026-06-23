@@ -46,6 +46,53 @@ export function foldTypographic(text: string): string {
   return out;
 }
 
+// eslint-disable-next-line no-control-regex
+const CONTROL_CHARS = /[\x00-\x1f\x7f]/g;
+
+/**
+ * Strip C0 control characters (and DEL) from user-supplied text, so a product
+ * or customer name containing raw ESC/GS bytes can't corrupt the receipt or
+ * inject printer commands. Newlines/feeds are emitted by components, never
+ * carried inside cell text, so removing all C0 + 0x7F is safe.
+ */
+export function sanitizeControl(text: string): string {
+  return text.replace(CONTROL_CHARS, '');
+}
+
+export interface MoneyOptions {
+  /** Symbol or code shown with the amount, e.g. 'Rs.', '$', 'LKR'. Default none. */
+  currency?: string;
+  /** Fraction digits. Default 2 (use 0 for whole-rupee LKR-style). */
+  decimals?: number;
+  /** Thousands group separator. Default ','. */
+  group?: string;
+  /** Decimal separator. Default '.'. */
+  decimal?: string;
+  /** Currency on the 'prefix' (default) or 'suffix' side. */
+  position?: 'prefix' | 'suffix';
+  /** Space between the currency and the number. Default true. */
+  space?: boolean;
+}
+
+/**
+ * Format money WITHOUT Intl — safe on Hermes / React Native, where `Intl` is
+ * absent and `Number.toLocaleString` silently drops grouping. Pure `toFixed`
+ * plus regex digit grouping. Negative amounts (refunds) get a leading '-'.
+ */
+export function formatMoney(amount: number, options: MoneyOptions = {}): string {
+  const { currency = '', decimals = 2, group = ',', decimal = '.', position = 'prefix', space = true } = options;
+  const sign = amount < 0 ? '-' : '';
+  const fixed = Math.abs(amount).toFixed(decimals);
+  const dot = fixed.indexOf('.');
+  const intPart = dot === -1 ? fixed : fixed.slice(0, dot);
+  const fracPart = dot === -1 ? '' : fixed.slice(dot + 1);
+  const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, group);
+  const num = fracPart ? grouped + decimal + fracPart : grouped;
+  if (!currency) return sign + num;
+  const sp = space ? ' ' : '';
+  return sign + (position === 'prefix' ? currency + sp + num : num + sp + currency);
+}
+
 /** Options handed to the injected rasterizer. */
 export interface RasterOptions {
   fontSize?: number;
@@ -102,7 +149,8 @@ export interface SmartTextOptions {
  */
 export function smartText(encoder: EncoderLike, raw: string, options: SmartTextOptions = {}): void {
   const codepage = options.codepage ?? 'cp437';
-  const text = foldTypographic(raw); // × → x, … → ... etc. before deciding text-vs-raster
+  // sanitize (drop injected control bytes) → fold (× → x, … → ...) → decide text-vs-raster
+  const text = foldTypographic(sanitizeControl(raw));
   if (!needsRaster(text, codepage)) {
     encoder.text(text);
     return;

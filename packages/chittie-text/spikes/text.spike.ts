@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import ReceiptPrinterEncoder from '@angadie/chittie-core';
 import ImageData from '@canvas/image-data';
-import { needsRaster, smartText, rasterizeRow, foldTypographic, type TextRasterizer } from '../src/index.js';
+import { needsRaster, smartText, rasterizeRow, foldTypographic, sanitizeControl, formatMoney, type TextRasterizer } from '../src/index.js';
 
 function contains(u8: Uint8Array, seq: number[]): boolean {
   const a = Array.from(u8);
@@ -65,4 +65,24 @@ e3.initialize();
 smartText(e3 as never, '2× Coffee', {});
 assert.ok(ascii(e3.encode()).includes('2x Coffee'), 'smartText folds × → x and prints as text');
 
-console.log('✓ chittie-text spike — detect ✓ raster-route ✓ no-silent-? ✓ rasterizeRow ✓ foldTypographic ✓');
+// sanitizeControl: strip injected control bytes (ESC/GS) from user text
+assert.equal(sanitizeControl('ABC'), 'ABC', 'C0 + DEL stripped (no injection)');
+// smartText sanitizes before encoding — a name with a raw ESC prints clean
+const e4 = new ReceiptPrinterEncoder({ columns: 32 });
+e4.initialize();
+smartText(e4 as never, 'MugX', {});
+assert.ok(ascii(e4.encode()).includes('MugX'), 'smartText strips control bytes from text');
+
+// formatMoney: RN-safe (no Intl). Prove grouping holds with Intl nulled (Hermes has none).
+const savedIntl = (globalThis as Record<string, unknown>).Intl;
+(globalThis as Record<string, unknown>).Intl = undefined;
+try {
+  assert.equal(formatMoney(1700, { currency: 'Rs.', decimals: 0 }), 'Rs. 1,700', 'LKR whole-rupee grouped');
+  assert.equal(formatMoney(1234567.5, { decimals: 2 }), '1,234,567.50', 'grouping + decimals, no Intl');
+  assert.equal(formatMoney(-250.5, { currency: '$' }), '-$ 250.50', 'refund (negative) gets leading -');
+  assert.equal(formatMoney(50, { currency: 'LKR', position: 'suffix' }), '50.00 LKR', 'suffix currency');
+} finally {
+  (globalThis as Record<string, unknown>).Intl = savedIntl;
+}
+
+console.log('✓ chittie-text spike — detect ✓ raster ✓ no-silent-? ✓ rasterizeRow ✓ fold ✓ sanitize ✓ formatMoney(no-Intl) ✓');
