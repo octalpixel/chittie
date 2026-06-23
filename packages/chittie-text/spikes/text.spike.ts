@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import ReceiptPrinterEncoder from '@angadie/chittie-core';
 import ImageData from '@canvas/image-data';
-import { needsRaster, smartText, type TextRasterizer } from '../src/index.js';
+import { needsRaster, smartText, rasterizeRow, type TextRasterizer } from '../src/index.js';
 
 function contains(u8: Uint8Array, seq: number[]): boolean {
   const a = Array.from(u8);
@@ -48,4 +48,10 @@ assert.throws(
   'throws instead of printing ?'
 );
 
-console.log('✓ chittie-text spike — detect ✓ raster-route ✓ no-silent-? ✓');
+// rasterizeRow: left + right → one printer-width image, dims padded to /8
+const rowImg = rasterizeRow(fake, 'නම', 'Rs. 250', { dotWidth: 384 });
+assert.equal(rowImg.width, 384, 'row image spans the printer dot width');
+assert.ok(rowImg.width % 8 === 0 && rowImg.height % 8 === 0, 'row image padded to multiples of 8');
+assert.equal(rowImg.data.length, rowImg.width * rowImg.height * 4, 'row image data is well-formed');
+
+console.log('✓ chittie-text spike — detect ✓ raster-route ✓ no-silent-? ✓ rasterizeRow ✓');

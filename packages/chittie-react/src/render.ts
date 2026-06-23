@@ -23,11 +23,19 @@ function resolveRoot(element: ReactElement): ReactElement {
 export interface RenderOptions {
   /** Characters per line; overridden by <Printer width>. */
   columns?: number;
+  /** Printable width in dots; defaults to columns × 12 (203 DPI, font A). */
+  dotWidth?: number;
   /** Supply to print non-encodable scripts (Sinhala/Tamil/…) as images. */
   rasterizer?: TextRasterizer;
   /** Code page used to decide what's encodable as text (default cp437). */
   codepage?: Codepage;
 }
+
+/** Common thermal printer profiles: characters/line + printable dot width (203 DPI). */
+export const PRINTER_PROFILES = {
+  '58mm': { columns: 32, dotWidth: 384 },
+  '80mm': { columns: 48, dotWidth: 576 },
+} as const;
 
 /**
  * Render a <Printer> element tree to ESC/POS bytes by driving the vendored
@@ -37,9 +45,10 @@ export function render(element: ReactElement, options: RenderOptions = {}): Uint
   const root = resolveRoot(element);
   const props = (root.props ?? {}) as { width?: number; children?: ReactNode };
   const columns = props.width ?? options.columns ?? 48;
+  const dotWidth = options.dotWidth ?? columns * 12;
   const encoder = new ReceiptPrinterEncoder({ columns });
   encoder.initialize();
-  walk(props.children, encoder, { columns, rasterizer: options.rasterizer, codepage: options.codepage });
+  walk(props.children, encoder, { columns, dotWidth, rasterizer: options.rasterizer, codepage: options.codepage });
   return encoder.encode();
 }
 

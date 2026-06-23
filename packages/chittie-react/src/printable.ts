@@ -7,7 +7,9 @@ export type Encoder = InstanceType<typeof ReceiptPrinterEncoder>;
 /** Render-time context threaded to every component's print(). */
 export interface RenderContext {
   columns: number;
-  /** When set, <Text> with non-encodable scripts (Sinhala/Tamil/…) is rasterized. */
+  /** Printable width in dots (e.g. 384 for 58mm, 576 for 80mm) — used when rasterizing. */
+  dotWidth: number;
+  /** When set, <Text>/<Row> with non-encodable scripts (Sinhala/Tamil/…) is rasterized. */
   rasterizer?: TextRasterizer;
   /** Code page used to decide what's encodable as text (default cp437). */
   codepage?: Codepage;

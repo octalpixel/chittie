@@ -1,6 +1,6 @@
 import { Fragment, isValidElement, type ReactNode } from 'react';
 import type { BarcodeSymbology, DitherAlgorithm } from '@angadie/chittie-core';
-import { smartText, padTo8 } from '@angadie/chittie-text';
+import { smartText, padTo8, needsRaster, rasterizeRow } from '@angadie/chittie-text';
 import type { Encoder, Printable, RenderContext } from './printable.js';
 
 export type Alignment = 'left' | 'center' | 'right';
@@ -64,7 +64,7 @@ export const Text = printable<TextProps>((e, p, ctx) => {
   smartText(e, toText(p.children), {
     rasterizer: ctx.rasterizer,
     codepage: ctx.codepage,
-    raster: { bold: p.bold, fontSize: p.size ? p.size.height * 24 : undefined },
+    raster: { bold: p.bold, fontSize: p.size ? p.size.height * 24 : undefined, maxWidth: ctx.dotWidth },
   });
   if (!p.inline) e.newline();
   if (p.size) e.size(1, 1);
@@ -82,6 +82,18 @@ export interface RowProps {
 export const Row = printable<RowProps>((e, p, ctx) => {
   const left = toText(p.left);
   const right = toText(p.right);
+  // Non-Latin in a cell can't go through code-page text — raster the whole row
+  // (left flush-left, right flush-right) as one image; throw if no rasterizer.
+  if (needsRaster(left, ctx.codepage) || needsRaster(right, ctx.codepage)) {
+    if (!ctx.rasterizer) {
+      throw new Error(
+        'chittie: <Row> contains non-encodable text (e.g. Sinhala/Tamil). Pass a rasterizer to render(), or use code-page text.'
+      );
+    }
+    const img = rasterizeRow(ctx.rasterizer, left, right, { dotWidth: ctx.dotWidth });
+    e.image(img, img.width, img.height);
+    return;
+  }
   const rightW = Math.min(right.length, ctx.columns);
   const leftW = Math.max(0, ctx.columns - rightW);
   e.table(

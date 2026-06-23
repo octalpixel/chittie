@@ -88,3 +88,49 @@ export function smartText(encoder: EncoderLike, text: string, options: SmartText
   const img = padTo8(options.rasterizer.rasterize(text, options.raster ?? {}));
   encoder.image(img, img.width, img.height);
 }
+
+// --- row rasterization (for non-Latin in table cells) ---
+
+function blank(template: ImageData, width: number, height: number): ImageData {
+  const Ctor = template.constructor as new (data: Uint8ClampedArray, w: number, h: number) => ImageData;
+  return new Ctor(new Uint8ClampedArray(width * height * 4).fill(255), width, height);
+}
+
+function blit(dst: ImageData, src: ImageData, dx: number, dy: number): void {
+  for (let y = 0; y < src.height; y++) {
+    const drow = ((dy + y) * dst.width + dx) * 4;
+    dst.data.set(src.data.subarray(y * src.width * 4, (y + 1) * src.width * 4), drow);
+  }
+}
+
+/**
+ * Render a two-column row (left flush-left, right flush-right) to one
+ * printer-width image — the correct way to print non-Latin text inside a
+ * table column, since a per-cell image can't sit in a text column. chittie
+ * computes the layout; the injected rasterizer shapes each fragment.
+ */
+export function rasterizeRow(
+  rasterizer: TextRasterizer,
+  left: string,
+  right: string,
+  options: { dotWidth: number } & RasterOptions
+): ImageData {
+  const { dotWidth, ...raster } = options;
+  const l = left ? rasterizer.rasterize(left, raster) : undefined;
+  const r = right ? rasterizer.rasterize(right, raster) : undefined;
+  const template = l ?? r;
+  if (!template) return padTo8(blankImage(8, 8));
+  const height = Math.max(l?.height ?? 0, r?.height ?? 0) || 1;
+  const width = Math.max(dotWidth, (l?.width ?? 0) + (r?.width ?? 0));
+  const out = blank(template, width, height);
+  if (l) blit(out, l, 0, 0);
+  if (r) blit(out, r, width - r.width, 0);
+  return padTo8(out);
+}
+
+function blankImage(w: number, h: number): ImageData {
+  // Fallback when there's nothing to render — needs a global ImageData.
+  const Ctor = (globalThis as { ImageData?: new (d: Uint8ClampedArray, w: number, h: number) => ImageData }).ImageData;
+  if (!Ctor) throw new Error('chittie-text: no ImageData available for an empty row');
+  return new Ctor(new Uint8ClampedArray(w * h * 4).fill(255), w, h);
+}

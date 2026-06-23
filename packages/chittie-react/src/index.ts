@@ -22,7 +22,7 @@ export {
   type QRCodeProps,
   type ImageProps,
 } from './components.js';
-export { render, type RenderOptions } from './render.js';
+export { render, PRINTER_PROFILES, type RenderOptions } from './render.js';
 export type { Encoder, RenderContext } from './printable.js';
 // Re-exported for consumers wiring render({ rasterizer }) for Sinhala/Tamil.
 export type { TextRasterizer, RasterOptions, Codepage } from '@angadie/chittie-text';

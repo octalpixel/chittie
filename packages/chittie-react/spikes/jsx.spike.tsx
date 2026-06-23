@@ -92,6 +92,20 @@ assert.ok(contains(rasterized, [0x1d, 0x76, 0x30]) || contains(rasterized, [0x1b
 assert.throws(() => render(sinhala), /rasterizer/, 'Sinhala without rasterizer throws');
 console.log('✓ chittie-text wired: <Text> Sinhala → image with rasterizer, throws without (no silent ?)');
 
+// --- <Row> with non-Latin cells: throws without rasterizer, rasters the row with one ---
+const sinhalaRow = (
+  <Printer width={32}>
+    <Row left="නම" right="Rs. 250" />
+  </Printer>
+);
+assert.throws(() => render(sinhalaRow), /Row|rasterizer|Sinhala/, '<Row> non-Latin throws without rasterizer (no silent ?)');
+const rowRastered = render(sinhalaRow, {
+  rasterizer: { rasterize: () => new ImageData(new Uint8ClampedArray(40 * 16 * 4), 40, 16) as unknown as ImageData },
+  dotWidth: 384,
+});
+assert.ok(contains(rowRastered, [0x1b, 0x2a]) || contains(rowRastered, [0x1d, 0x76, 0x30]), '<Row> non-Latin rasterized to image');
+console.log('✓ <Row> non-Latin: rasters the whole row with a rasterizer, throws without');
+
 // --- <Image>: arbitrary ImageData (non-8 dims) embeds as a raster image ---
 const logo = new ImageData(new Uint8ClampedArray(20 * 10 * 4).fill(0), 20, 10) as unknown as ImageData; // 20x10, not /8
 const withImage = render(

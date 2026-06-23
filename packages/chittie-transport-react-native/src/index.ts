@@ -59,6 +59,31 @@ export const toByteArray = (data: Uint8Array): number[] => Array.from(data);
 /** Bytes to a lowercase hex string — for libraries whose write takes hex: iMin `sendRAWDataHexStr`, Classic-BT hex encoding. */
 export const toHex = (data: Uint8Array): string => Array.from(data, (b) => b.toString(16).padStart(2, '0')).join('');
 
+/** Conservative chunking for cheap BLE printers that overrun at larger writes. */
+export const BLE_CONSERVATIVE: CreateTransportOptions = { chunkSize: 128, chunkDelayMs: 50 };
+
+/** A BLE characteristic as exposed by common libraries (ble-plx flags, or a properties bag). */
+export interface BleCharacteristicLike {
+  uuid: string;
+  isWritableWithResponse?: boolean;
+  isWritableWithoutResponse?: boolean;
+  properties?: { write?: boolean; writeWithoutResponse?: boolean; Write?: boolean; WriteWithoutResponse?: boolean };
+}
+
+/**
+ * Pick the writable characteristic from a connected device's list — replaces the
+ * brute-force "try every characteristic" pattern. Prefers write-without-response
+ * (faster for print streams). Returns undefined if none is writable.
+ */
+export function findWritableCharacteristic<T extends BleCharacteristicLike>(characteristics: T[]): T | undefined {
+  const writable = (c: T) =>
+    c.isWritableWithoutResponse || c.isWritableWithResponse || !!c.properties?.writeWithoutResponse || !!c.properties?.write || !!c.properties?.WriteWithoutResponse || !!c.properties?.Write;
+  return (
+    characteristics.find((c) => c.isWritableWithoutResponse || c.properties?.writeWithoutResponse || c.properties?.WriteWithoutResponse) ??
+    characteristics.find(writable)
+  );
+}
+
 /**
  * BLE convenience: same as createTransport but with sane MTU-chunking defaults.
  * Pass your library's characteristic-write as `write`.
