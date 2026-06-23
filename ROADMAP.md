@@ -37,6 +37,7 @@ split-payment/refund receipts. chittie is no longer theoretical.
 - `0.2.0` typographic folding (`× → x`, `… → ...`, …) — receipts stop throwing on smart punctuation.
 - `0.3.0` `formatMoney` (RN-safe, no Intl) + `sanitizeControl` (strip injected ESC/GS from user text).
 - `0.4.0` **`@angadie/chittie-label`** — TSPL label/tag printing (barcodes incl. EAN-13/Code128, QR, text, box, raster + non-Latin) — the fashion price-tag gap, as a standalone package.
+- `0.5.0` **`@angadie/chittie-label-react`** — pure JSX authoring for labels (`<Label>` + positioned `<LText>/<LBarcode>/<LQR>/<LBox>/<LBar>/<LImage>`), mirroring chittie-react.
 
 ## Roadmap
 
@@ -47,7 +48,7 @@ split-payment/refund receipts. chittie is no longer theoretical.
 
 ### Next — dogfood-driven (designs below)
 - [ ] **Print status feedback** (#1 reliability) — see design.
-- [x] **`chittie-label`** — TSPL label/tag printing — shipped `0.4.0`. Next: JSX `<Label>` layer (`chittie-label-react`) + label preview; verify on ordereka's label hardware.
+- [x] **`chittie-label`** + **`chittie-label-react`** — TSPL label/tag printing (builder `0.4.0`, JSX `0.5.0`). Next: label support in chittie-preview; verify on ordereka's label hardware.
 - [ ] **Logo raster caching** — ordereka solved app-side (`v1.0.6`); upstream a cache so every consumer benefits.
 - [ ] **i18n breadth** — code pages already exist for Thai (`cp874`), Japanese (`shiftjis`), Arabic; add selection guidance + RTL/bidi handling for `<Row>`.
 - [ ] **print-agent threat model** — drawer-pop abuse / DoS over localhost; document + token-gate the drawer pulse.

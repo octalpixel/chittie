@@ -184,6 +184,22 @@ importers:
         specifier: ^1.1.0
         version: 1.1.0
 
+  packages/chittie-label-react:
+    dependencies:
+      '@angadie/chittie-label':
+        specifier: workspace:*
+        version: link:../chittie-label
+    devDependencies:
+      '@canvas/image-data':
+        specifier: ^1.1.0
+        version: 1.1.0
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.17
+      react:
+        specifier: ^19.1.0
+        version: 19.2.7
+
   packages/chittie-preview:
     devDependencies:
       '@angadie/chittie':

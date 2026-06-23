@@ -2,6 +2,7 @@ import CodepageEncoder from '@angadie/chittie-codepage';
 import { needsRaster, foldTypographic, sanitizeControl, type TextRasterizer, type RasterOptions } from '@angadie/chittie-text';
 
 export type Codepage = Parameters<typeof CodepageEncoder.encode>[1];
+export type { TextRasterizer, RasterOptions } from '@angadie/chittie-text';
 
 /** Label stock + printer setup. Sizes are in millimetres; element coordinates are in dots. */
 export interface LabelProfile {
