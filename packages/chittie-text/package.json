@@ -1,6 +1,6 @@
 {
   "name": "@angadie/chittie-text",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Smart text for chittie: print code-page text when representable, auto-rasterize complex scripts (Sinhala/Tamil/…) via an injected rasterizer, never silently print '?'. Platform-neutral.",
   "license": "MIT",
   "type": "module",

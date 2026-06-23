@@ -1,6 +1,6 @@
 {
   "name": "@angadie/chittie-transport",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Transport contract for chittie: { connect; write; disconnect } + chunk()/writeBytes/print helpers. Zero runtime deps.",
   "license": "MIT",
   "type": "module",
