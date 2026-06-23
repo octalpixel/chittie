@@ -1,13 +1,28 @@
 {
   "name": "@angadie/chittie-transport-react-native",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Library-agnostic React Native / Expo transport for chittie. Bring any BLE/Classic/TCP library; we provide the adapter factory + MTU chunking.",
   "license": "MIT",
   "type": "module",
   "types": "./dist/index.d.mts",
-  "exports": { ".": { "types": "./dist/index.d.mts", "import": "./dist/index.mjs" } },
-  "files": ["dist"],
-  "scripts": { "build": "tsdown", "typecheck": "tsc --noEmit", "test": "tsx spikes/rn-transport.spike.ts" },
-  "dependencies": { "@angadie/chittie-transport": "workspace:*" },
-  "publishConfig": { "access": "public" }
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx spikes/rn-transport.spike.ts"
+  },
+  "dependencies": {
+    "@angadie/chittie-transport": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

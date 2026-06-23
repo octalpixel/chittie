@@ -1,17 +1,30 @@
 {
   "name": "@angadie/chittie-preview",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Render a receipt to an image by parsing the ESC/POS bytes chittie emits — a software preview of what the printer will print. Platform-neutral via an injected canvas (browser or @napi-rs/canvas).",
   "license": "MIT",
   "type": "module",
   "types": "./dist/index.d.mts",
-  "exports": { ".": { "types": "./dist/index.d.mts", "import": "./dist/index.mjs" } },
-  "files": ["dist"],
-  "scripts": { "build": "tsdown", "typecheck": "tsc --noEmit", "test": "tsx spikes/preview.spike.ts" },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx spikes/preview.spike.ts"
+  },
   "devDependencies": {
     "@angadie/chittie": "workspace:*",
     "@angadie/chittie-text": "workspace:*",
     "@canvas/image-data": "^1.1.0"
   },
-  "publishConfig": { "access": "public" }
+  "publishConfig": {
+    "access": "public"
+  }
 }

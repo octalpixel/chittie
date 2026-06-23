@@ -1,14 +1,32 @@
 {
   "name": "@angadie/chittie",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Batteries-included receipt printing: builder + JSX authoring → ESC/POS bytes. The front door that re-exports chittie-core + chittie-react.",
   "license": "MIT",
   "type": "module",
   "types": "./dist/index.d.mts",
-  "exports": { ".": { "types": "./dist/index.d.mts", "import": "./dist/index.mjs" } },
-  "files": ["dist"],
-  "scripts": { "build": "tsdown", "typecheck": "tsc --noEmit", "test": "tsx spikes/meta.spike.tsx" },
-  "dependencies": { "@angadie/chittie-core": "workspace:*", "@angadie/chittie-react": "workspace:*" },
-  "peerDependencies": { "react": "^18 || ^19" },
-  "publishConfig": { "access": "public" }
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx spikes/meta.spike.tsx"
+  },
+  "dependencies": {
+    "@angadie/chittie-core": "workspace:*",
+    "@angadie/chittie-react": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18 || ^19"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

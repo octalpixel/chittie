@@ -1,6 +1,6 @@
 {
   "name": "@angadie/chittie-react",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Pure JSX receipt authoring → ESC/POS bytes. RN-safe (no react-dom, no HTML host elements). Renders onto chittie-core.",
   "license": "MIT",
   "type": "module",
@@ -11,7 +11,9 @@
       "import": "./dist/index.mjs"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsdown",
     "typecheck": "tsc --noEmit",
@@ -27,5 +29,7 @@
   "devDependencies": {
     "@canvas/image-data": "^1.1.0"
   },
-  "publishConfig": { "access": "public" }
+  "publishConfig": {
+    "access": "public"
+  }
 }

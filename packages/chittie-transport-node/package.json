@@ -1,14 +1,31 @@
 {
   "name": "@angadie/chittie-transport-node",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Node/Electron network (LAN) transport for chittie — raw TCP to an ESC/POS printer on port 9100. Zero deps (node:net).",
   "license": "MIT",
   "type": "module",
   "types": "./dist/index.d.mts",
-  "exports": { ".": { "types": "./dist/index.d.mts", "import": "./dist/index.mjs" } },
-  "files": ["dist"],
-  "scripts": { "build": "tsdown", "typecheck": "tsc --noEmit", "test": "tsx spikes/network.spike.ts" },
-  "dependencies": { "@angadie/chittie-transport": "workspace:*" },
-  "devDependencies": { "@types/node": "^22.0.0" },
-  "publishConfig": { "access": "public" }
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx spikes/network.spike.ts"
+  },
+  "dependencies": {
+    "@angadie/chittie-transport": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

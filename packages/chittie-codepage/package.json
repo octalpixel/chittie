@@ -1,6 +1,6 @@
 {
   "name": "@angadie/chittie-codepage",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Zero-dependency code-page encoder for thermal printers (vendored from @point-of-sale/codepage-encoder, MIT).",
   "license": "MIT",
   "type": "module",
@@ -11,11 +11,18 @@
       "import": "./src/index.js"
     }
   },
-  "files": ["src", "generated", "types", "LICENSE"],
+  "files": [
+    "src",
+    "generated",
+    "types",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "echo 'chittie-codepage ships ESM source (no build step)'",
     "typecheck": "echo 'no typecheck (vendored JS + shipped .d.ts)'",
     "test": "node spikes/encode.spike.mjs"
   },
-  "publishConfig": { "access": "public" }
+  "publishConfig": {
+    "access": "public"
+  }
 }
