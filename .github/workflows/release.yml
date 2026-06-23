@@ -1,0 +1,44 @@
+name: Release
+
+# Changesets flow:
+#  1. PRs land on main with a changeset (`pnpm changeset`) describing the bump.
+#  2. This workflow opens/updates a "Version Packages" PR (runs `changeset version`).
+#  3. Merging that PR runs `pnpm release` → `pnpm -r build && pnpm -r publish`,
+#     which publishes only newly-versioned packages and REWRITES `workspace:*`
+#     deps to real versions (pnpm strips the workspace protocol; `changeset
+#     publish` does NOT — see changesets#246 / pnpm docs).
+on:
+  push:
+    branches: [main]
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: write       # create the version commit / tags
+  pull-requests: write  # open the "Version Packages" PR
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # pnpm publish reads ~/.npmrc — set the token from the repo secret.
+      - name: Configure npm auth
+        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - uses: changesets/action@v1
+        with:
+          version: pnpm version-packages   # changeset version (bumps + updates internal deps)
+          publish: pnpm release            # pnpm -r build && pnpm -r publish (strips workspace:*)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

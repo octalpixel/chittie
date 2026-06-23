@@ -15,7 +15,7 @@
     "lint": "biome check .",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "pnpm build && changeset publish",
+    "release": "pnpm -r build && pnpm -r publish --access public --no-git-checks",
     "check": "pnpm -r build && pnpm -r typecheck && pnpm -r test"
   },
   "devDependencies": {
