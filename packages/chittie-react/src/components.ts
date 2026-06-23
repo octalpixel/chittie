@@ -1,6 +1,6 @@
 import { Fragment, isValidElement, type ReactNode } from 'react';
 import type { BarcodeSymbology, DitherAlgorithm } from '@angadie/chittie-core';
-import { smartText, padTo8, needsRaster, rasterizeRow } from '@angadie/chittie-text';
+import { smartText, padTo8, needsRaster, rasterizeRow, foldTypographic } from '@angadie/chittie-text';
 import type { Encoder, Printable, RenderContext } from './printable.js';
 
 export type Alignment = 'left' | 'center' | 'right';
@@ -80,8 +80,8 @@ export interface RowProps {
   children?: ReactNode;
 }
 export const Row = printable<RowProps>((e, p, ctx) => {
-  const left = toText(p.left);
-  const right = toText(p.right);
+  const left = foldTypographic(toText(p.left));
+  const right = foldTypographic(toText(p.right));
   // Non-Latin in a cell can't go through code-page text — raster the whole row
   // (left flush-left, right flush-right) as one image; throw if no rasterizer.
   if (needsRaster(left, ctx.codepage) || needsRaster(right, ctx.codepage)) {

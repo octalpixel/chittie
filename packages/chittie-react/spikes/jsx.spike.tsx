@@ -106,6 +106,19 @@ const rowRastered = render(sinhalaRow, {
 assert.ok(contains(rowRastered, [0x1b, 0x2a]) || contains(rowRastered, [0x1d, 0x76, 0x30]), '<Row> non-Latin rasterized to image');
 console.log('✓ <Row> non-Latin: rasters the whole row with a rasterizer, throws without');
 
+// --- typographic folding: × — " " … in text/rows print as ASCII (no throw, no raster) ---
+const typo = render(
+  <Printer width={32}>
+    <Text>Café — “special”</Text>
+    <Row left="2× Coffee" right="Rs. 850" />
+  </Printer>
+);
+const typoAscii = ascii(typo);
+assert.ok(typoAscii.includes('2x Coffee'), '<Row> folds × → x and prints as text');
+assert.ok(typoAscii.includes('- "special"'), '<Text> folds em-dash + curly quotes to ASCII');
+assert.ok(!contains(typo, [0x1d, 0x76, 0x30]) && !contains(typo, [0x1b, 0x2a]), 'no raster image emitted for typographic chars');
+console.log('✓ typographic folding: × — “ ” … render as ASCII (no raster, no throw)');
+
 // --- <Image>: arbitrary ImageData (non-8 dims) embeds as a raster image ---
 const logo = new ImageData(new Uint8ClampedArray(20 * 10 * 4).fill(0), 20, 10) as unknown as ImageData; // 20x10, not /8
 const withImage = render(

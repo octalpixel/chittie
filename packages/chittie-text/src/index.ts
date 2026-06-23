@@ -18,6 +18,34 @@ export function needsRaster(text: string, codepage: Codepage = 'cp437'): boolean
   return false;
 }
 
+// Common typographic punctuation → ASCII. These aren't in cp437 (× — ' " … all
+// encode to "?", and • to 0x07/BEL), but have a conventional receipt-safe ASCII
+// form — so we fold them rather than throw/raster. NOT a silent "?": it's the
+// standard receipt rendering (e.g. "2× Coffee" → "2x Coffee").
+const TYPOGRAPHIC: Record<string, string> = {
+  '×': 'x', // × multiplication sign
+  '–': '-', // – en dash
+  '—': '-', // — em dash
+  '−': '-', // − minus sign
+  '‘': "'", // ' left single quote
+  '’': "'", // ' right single quote / apostrophe
+  '′': "'", // ′ prime
+  '“': '"', // " left double quote
+  '”': '"', // " right double quote
+  '″': '"', // ″ double prime
+  '…': '...', // … ellipsis
+  '•': '*', // • bullet (avoids cp437 0x07/BEL)
+  '→': '->', // → rightwards arrow
+  ' ': ' ', // nbsp
+};
+
+/** Fold common typographic punctuation to ASCII so receipts don't choke on a code page (× → x, … → ...). */
+export function foldTypographic(text: string): string {
+  let out = '';
+  for (const ch of text) out += TYPOGRAPHIC[ch] ?? ch;
+  return out;
+}
+
 /** Options handed to the injected rasterizer. */
 export interface RasterOptions {
   fontSize?: number;
@@ -72,8 +100,9 @@ export interface SmartTextOptions {
  * rasterized image when it isn't (Sinhala/Tamil/…). If a raster is needed but no
  * rasterizer was supplied, it throws a clear error instead of silently printing "?".
  */
-export function smartText(encoder: EncoderLike, text: string, options: SmartTextOptions = {}): void {
+export function smartText(encoder: EncoderLike, raw: string, options: SmartTextOptions = {}): void {
   const codepage = options.codepage ?? 'cp437';
+  const text = foldTypographic(raw); // × → x, … → ... etc. before deciding text-vs-raster
   if (!needsRaster(text, codepage)) {
     encoder.text(text);
     return;

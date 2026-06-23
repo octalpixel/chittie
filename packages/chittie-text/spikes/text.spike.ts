@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import ReceiptPrinterEncoder from '@angadie/chittie-core';
 import ImageData from '@canvas/image-data';
-import { needsRaster, smartText, rasterizeRow, type TextRasterizer } from '../src/index.js';
+import { needsRaster, smartText, rasterizeRow, foldTypographic, type TextRasterizer } from '../src/index.js';
 
 function contains(u8: Uint8Array, seq: number[]): boolean {
   const a = Array.from(u8);
@@ -54,4 +54,15 @@ assert.equal(rowImg.width, 384, 'row image spans the printer dot width');
 assert.ok(rowImg.width % 8 === 0 && rowImg.height % 8 === 0, 'row image padded to multiples of 8');
 assert.equal(rowImg.data.length, rowImg.width * rowImg.height * 4, 'row image data is well-formed');
 
-console.log('✓ chittie-text spike — detect ✓ raster-route ✓ no-silent-? ✓ rasterizeRow ✓');
+// foldTypographic: common punctuation that cp437 lacks → ASCII (× → x, … → ..., etc.)
+assert.equal(foldTypographic('2× Coffee'), '2x Coffee', '× folds to x');
+assert.equal(foldTypographic('A — B “c” … •'), 'A - B "c" ... *', 'dash/quotes/ellipsis/bullet fold');
+assert.equal(needsRaster('2× Coffee'), true, '× is unencodable on cp437 (raw)');
+assert.equal(needsRaster(foldTypographic('2× Coffee')), false, 'folded form is encodable — no raster/throw');
+// smartText folds first, so "2× Coffee" prints as text without a rasterizer (no throw)
+const e3 = new ReceiptPrinterEncoder({ columns: 32 });
+e3.initialize();
+smartText(e3 as never, '2× Coffee', {});
+assert.ok(ascii(e3.encode()).includes('2x Coffee'), 'smartText folds × → x and prints as text');
+
+console.log('✓ chittie-text spike — detect ✓ raster-route ✓ no-silent-? ✓ rasterizeRow ✓ foldTypographic ✓');
