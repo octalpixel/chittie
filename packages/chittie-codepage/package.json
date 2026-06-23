@@ -1,6 +1,6 @@
 {
   "name": "@angadie/chittie-codepage",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Zero-dependency code-page encoder for thermal printers (vendored from @point-of-sale/codepage-encoder, MIT).",
   "license": "MIT",
   "type": "module",
