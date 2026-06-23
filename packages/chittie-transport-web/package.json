@@ -1,6 +1,6 @@
 {
   "name": "@angadie/chittie-transport-web",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Web transports for chittie: Web Serial, WebUSB, Web Bluetooth. Browser platform APIs only.",
   "license": "MIT",
   "type": "module",
