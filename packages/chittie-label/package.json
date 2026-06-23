@@ -1,0 +1,32 @@
+{
+  "name": "@angadie/chittie-label",
+  "version": "0.3.0",
+  "description": "TSPL label/tag printing for chittie — barcodes, QR, text, boxes, and rasterized images (incl. non-Latin) on coordinate-positioned labels. Universal (web/RN/node), Buffer-free.",
+  "license": "MIT",
+  "type": "module",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx spikes/label.spike.ts"
+  },
+  "dependencies": {
+    "@angadie/chittie-codepage": "workspace:*",
+    "@angadie/chittie-text": "workspace:*"
+  },
+  "devDependencies": {
+    "@canvas/image-data": "^1.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
