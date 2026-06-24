@@ -14,13 +14,17 @@ The **turnkey print bridge + dev studio** for any web POS. One Rust core
 It avoids ordereka's sidecar footgun (a separate always-spawned process that held an
 update file-lock) — the server is *in* the app.
 
-## Develop
+## Run locally (macOS / your dev machine) — no CI needed
 ```bash
-# from apps/companion
-npx @tauri-apps/cli icon icon.png        # one-time: generate src-tauri/icons (needs a 1024² source)
-npx @tauri-apps/cli dev                  # run the app (loads ./dist)
-npx @tauri-apps/cli build                # local bundle
+cd apps/companion
+npm install            # @tauri-apps/cli
+npm run dev            # live dev: opens the window, server on :8930, hot-reloads ./dist
+npm run build:app      # build a local .app  → src-tauri/target/debug/bundle/macos/
+CHITTIE_VIRTUAL=1 npm run dev   # test with no printer (renders PNGs instead of printing)
 ```
+CI is only for cross-OS *installers* (mac+win+linux at once). A single-OS build/run is local.
+Icons are committed; regenerate with `npm run icon` after changing `branding/logo.png`.
+The static frontend uses the global Tauri API, so `app.withGlobalTauri` is enabled in the config.
 The frontend is static (`dist/index.html`, vanilla JS) — no build step. Replace it
 with a richer studio later; the Tauri commands + the `:8930` server are the contract.
 
