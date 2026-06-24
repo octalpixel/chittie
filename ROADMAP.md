@@ -38,6 +38,7 @@ split-payment/refund receipts. chittie is no longer theoretical.
 - `0.3.0` `formatMoney` (RN-safe, no Intl) + `sanitizeControl` (strip injected ESC/GS from user text).
 - `0.4.0` **`@angadie/chittie-label`** — TSPL label/tag printing (barcodes incl. EAN-13/Code128, QR, text, box, raster + non-Latin) — the fashion price-tag gap, as a standalone package.
 - `0.5.0` **`@angadie/chittie-label-react`** — pure JSX authoring for labels (`<Label>` + positioned `<LText>/<LBarcode>/<LQR>/<LBox>/<LBar>/<LImage>`), mirroring chittie-react.
+- `chittie-preview 0.6.0` — `renderLabel` (TSPL → canvas) so labels get the same hardware-free preview as receipts; playground gains a Label/Tag tab.
 
 ## Roadmap
 
@@ -52,6 +53,7 @@ split-payment/refund receipts. chittie is no longer theoretical.
 - [ ] **Logo raster caching** — ordereka solved app-side (`v1.0.6`); upstream a cache so every consumer benefits.
 - [ ] **i18n breadth** — code pages already exist for Thai (`cp874`), Japanese (`shiftjis`), Arabic; add selection guidance + RTL/bidi handling for `<Row>`.
 - [ ] **print-agent threat model** — drawer-pop abuse / DoS over localhost; document + token-gate the drawer pulse.
+- [ ] **print-agent virtual printer port ("studio mode")** + embeddable-core split — register an OS print device (CUPS backend / Windows RedMon port) that feeds the agent; `POST /print-raw`; a vendoring guide so others lift it like ordereka did. Design: `tools/print-agent/VIRTUAL-PRINTER.md`.
 
 ---
 
