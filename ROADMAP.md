@@ -54,6 +54,7 @@ split-payment/refund receipts. chittie is no longer theoretical.
 - [ ] **i18n breadth** — code pages already exist for Thai (`cp874`), Japanese (`shiftjis`), Arabic; add selection guidance + RTL/bidi handling for `<Row>`.
 - [ ] **print-agent threat model** — drawer-pop abuse / DoS over localhost; document + token-gate the drawer pulse.
 - [ ] **print-agent virtual printer port ("studio mode")** + embeddable-core split — register an OS print device (CUPS backend / Windows RedMon port) that feeds the agent; `POST /print-raw`; a vendoring guide so others lift it like ordereka did. Design: `tools/print-agent/VIRTUAL-PRINTER.md`.
+- [ ] **Companion (Tauri app) + JS SDK + multi-station (KOT/BOT)** — one Rust core, three shells (headless service / Tauri companion app = dev studio / vendor's own Tauri-embed or Electron-sidecar); `@angadie/chittie-companion` client (discover → print-to-pinned-station → result); capability-detect mechanism + pinned-per-station config + onboarding (no shotgun). Finalized design: **`docs/architecture.md`**; vendor how-to: **`docs/pos-vendor-guide.md`**.
 
 ---
 
