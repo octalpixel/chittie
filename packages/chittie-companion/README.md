@@ -29,6 +29,8 @@ const res = await printer.print(bytes, { station: 'receipt' });
 toast(res.printed ? `✓ Printed → ${res.target}` : `✗ ${res.reason}`);
 ```
 
+> Full integration guide: [MANUAL.md](./MANUAL.md)
+
 ## API
 - `health()` → `Health | null` (null if unreachable).
 - `available()` → `boolean` — use it to choose direct Web Serial vs the companion.
