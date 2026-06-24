@@ -156,6 +156,8 @@ importers:
 
   packages/chittie-codepage: {}
 
+  packages/chittie-companion: {}
+
   packages/chittie-core:
     dependencies:
       '@angadie/chittie-codepage':
