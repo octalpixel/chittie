@@ -5,125 +5,222 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chittie Companion</title>
     <style>
-      body { font-family: system-ui, sans-serif; max-width: 720px; margin: 1.5rem auto; padding: 0 1rem; color: #1a1a1a; }
-      h1 { font-size: 1.4rem; } h2 { font-size: 1rem; margin-top: 1.5rem; }
-      .printer { display: flex; align-items: center; gap: .5rem; padding: .4rem 0; border-bottom: 1px solid #eee; }
-      .printer .name { flex: 1; } .pill { font-size: .7rem; background: #eee; border-radius: 4px; padding: 1px 6px; }
-      button { padding: .35rem .7rem; cursor: pointer; }
-      .stations { display: grid; grid-template-columns: auto 1fr auto; gap: .4rem .8rem; align-items: center; }
-      #result { margin-top: 1rem; font-weight: 600; }
-      .ok { color: #137333; } .err { color: #c5221f; } .muted { color: #777; font-size: .85rem; }
+      :root {
+        --bg: #f7f7f6; --surface: #ffffff; --ink: #18181b; --muted: #6b7280;
+        --line: #e7e5e4; --accent: #3b34c4; --accent-ink: #ffffff;
+        --ok: #15803d; --warn: #b45309; --err: #b91c1c;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; background: var(--bg); color: var(--ink);
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.5; -webkit-font-smoothing: antialiased;
+      }
+      .wrap { max-width: 520px; margin: 0 auto; padding: 2.25rem 1.25rem 3rem; }
+      .brand { display: flex; align-items: center; gap: .6rem; margin-bottom: 1.75rem; }
+      .brand img { height: 30px; border-radius: 7px; display: none; }
+      .brand h1 { font-size: 1.15rem; font-weight: 650; letter-spacing: -0.01em; margin: 0; }
+
+      .status { display: flex; align-items: center; gap: .85rem; padding: 1.15rem 1.25rem;
+        background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+      .dot { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+      .status .big { font-size: 1.05rem; font-weight: 600; }
+      .status .sub { font-size: .85rem; color: var(--muted); }
+
+      .btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+        font: inherit; font-weight: 600; padding: .8rem 1.1rem; border-radius: 11px;
+        border: 1px solid transparent; cursor: pointer; transition: transform .08s ease, background .15s; }
+      .btn:active { transform: translateY(1px); }
+      .btn-primary { background: var(--accent); color: var(--accent-ink); width: 100%; font-size: 1rem; margin-top: 1rem; }
+      .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+      .btn-ghost { background: transparent; border-color: var(--line); color: var(--ink); padding: .5rem .8rem; font-size: .85rem; }
+
+      .section-label { font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+        color: var(--muted); margin: 2rem 0 .6rem; }
+      .row { display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+        padding: .9rem 0; border-bottom: 1px solid var(--line); }
+      .row:last-child { border-bottom: none; }
+      .row .name { font-weight: 550; }
+      .row .meta { font-size: .8rem; color: var(--muted); }
+
+      .pick { display: flex; align-items: center; justify-content: space-between; width: 100%;
+        background: var(--surface); border: 1px solid var(--line); border-radius: 11px;
+        padding: .85rem 1rem; cursor: pointer; font: inherit; text-align: left; }
+      .pick:hover { border-color: #d6d3d1; }
+      .pick .name { font-weight: 550; }
+      .pick.sel { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+
+      .toggle { display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+        padding: 1rem 0; }
+      .toggle .label { font-weight: 550; }
+      .toggle .label small { display: block; font-weight: 400; color: var(--muted); font-size: .82rem; }
+      .switch { position: relative; width: 44px; height: 26px; flex: none; }
+      .switch input { opacity: 0; width: 0; height: 0; }
+      .slider { position: absolute; inset: 0; background: #d4d4d8; border-radius: 999px; transition: .2s; }
+      .slider::before { content: ""; position: absolute; height: 20px; width: 20px; left: 3px; top: 3px;
+        background: #fff; border-radius: 50%; transition: .2s; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+      .switch input:checked + .slider { background: var(--accent); }
+      .switch input:checked + .slider::before { transform: translateX(18px); }
+
+      #msg { margin-top: 1rem; font-weight: 550; font-size: .9rem; min-height: 1.2em; }
+      #msg.ok { color: var(--ok); } #msg.err { color: var(--err); }
+      #preview img { max-width: 100%; border: 1px solid var(--line); border-radius: 8px; margin-top: .8rem; }
+      .empty { color: var(--muted); font-size: .9rem; padding: .9rem 0; }
+
+      details { margin-top: 2.5rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+      summary { cursor: pointer; font-size: .85rem; font-weight: 600; color: var(--muted); list-style: none; }
+      summary::-webkit-details-marker { display: none; }
+      details[open] summary { color: var(--ink); }
+      .adv { font-size: .85rem; color: var(--muted); margin-top: 1rem; }
+      .adv code { background: #efefee; padding: 1px 5px; border-radius: 4px; }
     </style>
   </head>
   <body>
-    <h1 id="brand" style="display:flex;align-items:center;gap:.6rem;"><img id="brand-logo" alt="" style="height:32px;display:none;border-radius:6px;" /><span id="brand-name">Chittie Companion</span></h1>
-    <p class="muted">Print bridge running on <code>http://localhost:8930</code>. Pin a printer per station; the POS prints to the pinned target — never the rotating OS default.</p>
-    <p style="display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;">
-      <label style="display:inline-flex;align-items:center;gap:.4rem;"><input type="checkbox" id="virtual" /> Virtual mode — render a PNG instead of printing (test without a printer)</label>
-      <button id="test-btn">Test print</button>
-    </p>
-    <div id="preview" style="margin-top:.8rem;"></div>
+    <div class="wrap">
+      <div class="brand"><img id="brand-logo" alt="" /><h1 id="brand-name">Chittie Companion</h1></div>
 
-    <h2>Printers <button id="refresh">Refresh</button></h2>
-    <div id="printers"></div>
+      <div class="status">
+        <span class="dot" id="dot" style="background: var(--warn)"></span>
+        <div>
+          <div class="big" id="status-big">Getting ready…</div>
+          <div class="sub" id="status-sub">Checking your printer.</div>
+        </div>
+      </div>
 
-    <h2>Stations</h2>
-    <div class="stations" id="stations"></div>
+      <button class="btn btn-primary" id="print-test" disabled>Print a test receipt</button>
+      <div id="msg"></div>
+      <div id="preview"></div>
 
-    <div id="result"></div>
+      <div class="section-label">Your printer</div>
+      <div id="chosen"></div>
+      <div id="picker" style="display:none; margin-top:.6rem; display:grid; gap:.5rem;"></div>
+
+      <div class="toggle">
+        <div class="label">Start automatically
+          <small>Open Chittie in the background when you turn on this computer.</small>
+        </div>
+        <label class="switch"><input type="checkbox" id="autostart" /><span class="slider"></span></label>
+      </div>
+
+      <details>
+        <summary>Advanced (for setup engineers)</summary>
+        <div class="adv">
+          <p>Print bridge on <code>http://localhost:8930</code>. The web POS prints to your chosen printer; for cafés, pin a printer per station in your POS.</p>
+          <div class="toggle">
+            <div class="label">Virtual mode <small>Render a receipt as an image instead of printing — test with no printer.</small></div>
+            <label class="switch"><input type="checkbox" id="virtual" /><span class="slider"></span></label>
+          </div>
+          <button class="btn btn-ghost" id="refresh">Look for printers again</button>
+          <div id="all-printers" style="margin-top:1rem;"></div>
+        </div>
+      </details>
+    </div>
 
     <script type="module">
       const invoke = (cmd, args) => window.__TAURI__.core.invoke(cmd, args);
-
-      // White-label: skin name / logo / accent from branding.json (runtime, no rebuild)
-      async function applyBranding() {
-        try {
-          const b = await invoke('branding');
-          if (b?.name) { document.getElementById('brand-name').textContent = b.name; document.title = b.name; }
-          if (b?.accent) {
-            for (const btn of document.querySelectorAll('button')) { btn.style.background = b.accent; btn.style.color = '#fff'; btn.style.border = 'none'; btn.style.borderRadius = '4px'; }
-          }
-          if (b?.logoPath) {
-            try {
-              const url = window.__TAURI__.core.convertFileSrc(b.logoPath);
-              const img = document.getElementById('brand-logo'); img.src = url; img.style.display = 'inline-block';
-            } catch {}
-          }
-        } catch {}
-      }
-
-      const STATIONS = ['receipt', 'kitchen', 'bar'];
-      const KEY = 'chittie_stations_v1';
-      const pins = JSON.parse(localStorage.getItem(KEY) || '{}');
-      const savePins = () => localStorage.setItem(KEY, JSON.stringify(pins));
-      const setResult = (msg, cls) => { const r = document.getElementById('result'); r.textContent = msg; r.className = cls || ''; };
-
+      const $ = (id) => document.getElementById(id);
+      const PKEY = 'chittie_printer';
+      let chosen = localStorage.getItem(PKEY) || '';
       let targets = [];
-      async function loadPrinters() {
-        try {
-          targets = await invoke('list_printers');
-          const el = document.getElementById('printers');
-          el.innerHTML = '';
-          if (!targets.length) { el.innerHTML = '<p class="muted">No printers found. Install the printer driver, then Refresh.</p>'; }
-          for (const p of targets) {
-            const target = p.transport === 'usb' ? 'usb' : p.systemName;
-            const row = document.createElement('div');
-            row.className = 'printer';
-            row.innerHTML = `<span class="name">${p.name}</span>${p.isDefault ? '<span class="pill">OS default</span>' : ''}`;
-            const test = document.createElement('button');
-            test.textContent = 'Test print';
-            test.onclick = () => testPrint(target);
-            row.appendChild(test);
-            el.appendChild(row);
-          }
-          renderStations();
-        } catch (e) { setResult('Could not list printers: ' + e, 'err'); }
-      }
 
-      function renderStations() {
-        const el = document.getElementById('stations');
-        el.innerHTML = '';
-        for (const s of STATIONS) {
-          const label = document.createElement('label'); label.textContent = s;
-          const sel = document.createElement('select');
-          sel.innerHTML = '<option value="">— none —</option>' +
-            targets.map(p => { const t = p.transport === 'usb' ? 'usb' : p.systemName; return `<option value="${t}" ${pins[s] === t ? 'selected' : ''}>${p.name}</option>`; }).join('');
-          sel.onchange = () => { if (sel.value) pins[s] = sel.value; else delete pins[s]; savePins(); };
-          const test = document.createElement('button');
-          test.textContent = 'Test';
-          test.onclick = () => {
-            if (!pins[s] && !document.getElementById('virtual').checked) return setResult(`Pin a printer for "${s}" first`, 'err');
-            testPrint(pins[s] || 'default');
-          };
-          el.append(label, sel, test);
+      const setMsg = (t, cls) => { const m = $('msg'); m.textContent = t || ''; m.className = cls || ''; };
+
+      function setStatus(state) {
+        const dot = $('dot'), big = $('status-big'), sub = $('status-sub');
+        if (state === 'ready') {
+          dot.style.background = 'var(--ok)'; big.textContent = 'Ready to print';
+          sub.textContent = `Receipts go to ${chosen}.`; $('print-test').disabled = false;
+        } else if (state === 'setup') {
+          dot.style.background = 'var(--warn)'; big.textContent = "Let's set up your printer";
+          sub.textContent = 'Choose your printer below to start printing.'; $('print-test').disabled = true;
         }
       }
 
-      async function testPrint(target) {
-        // ESC @ (init) + text + feed + GS V 0 (cut)
-        const enc = new TextEncoder();
-        const text = enc.encode(`Chittie Companion\nTest -> ${target}\n\n\n`);
-        const bytes = [0x1b, 0x40, ...text, 0x1d, 0x56, 0x00];
-        const virtual = document.getElementById('virtual').checked;
-        try {
-          const out = await invoke('print_escpos', { bytes, target: virtual ? 'virtual' : target });
-          if (virtual) {
-            document.getElementById('preview').innerHTML = `<img src="${out}" style="max-width:100%;border:1px solid #ddd;" />`;
-            setResult('✓ Rendered (virtual) — no printer used', 'ok');
-          } else {
-            document.getElementById('preview').innerHTML = '';
-            setResult(`✓ Printed → ${out}`, 'ok');
-          }
-        } catch (e) { setResult(`✗ ${e}`, 'err'); }
+      function friendly(p) { return p.name; }
+      function targetOf(p) { return p.transport === 'usb' ? 'usb' : p.systemName; }
+
+      function renderChosen() {
+        const el = $('chosen');
+        if (chosen) {
+          const p = targets.find((t) => targetOf(t) === chosen);
+          el.innerHTML = `<div class="pick sel"><span class="name">${p ? friendly(p) : chosen}</span>
+            <span class="btn btn-ghost" id="change">Change</span></div>`;
+          $('change').onclick = () => { $('picker').style.display = 'grid'; el.scrollIntoView({ behavior: 'smooth' }); };
+          $('picker').style.display = 'none';
+        } else {
+          el.innerHTML = `<button class="pick" id="open-pick"><span class="name">Choose your printer…</span><span class="meta">tap to pick</span></button>`;
+          $('open-pick').onclick = () => { $('picker').style.display = 'grid'; };
+          $('picker').style.display = 'grid';
+        }
       }
 
-      document.getElementById('refresh').onclick = loadPrinters;
-      document.getElementById('test-btn').onclick = () => {
-        const first = Object.values(pins)[0] || (targets[0] && (targets[0].transport === 'usb' ? 'usb' : targets[0].systemName)) || 'default';
-        testPrint(first); // in Virtual mode the target is ignored (renders a PNG)
-      };
+      function renderPicker() {
+        const el = $('picker');
+        if (!targets.length) {
+          el.innerHTML = `<div class="empty">No printer found. Plug your printer in by USB (and turn it on), then open Advanced and tap “Look for printers again”.</div>`;
+          return;
+        }
+        el.innerHTML = '';
+        for (const p of targets) {
+          const t = targetOf(p);
+          const b = document.createElement('button');
+          b.className = 'pick' + (chosen === t ? ' sel' : '');
+          b.innerHTML = `<span class="name">${friendly(p)}</span>${p.isDefault ? '<span class="meta">system default</span>' : ''}`;
+          b.onclick = () => { chosen = t; localStorage.setItem(PKEY, t); setStatus('ready'); renderChosen(); renderPicker(); renderAll(); setMsg('Printer set. Print a test receipt to confirm.', 'ok'); };
+          el.appendChild(b);
+        }
+      }
+
+      function renderAll() {
+        const el = $('all-printers');
+        if (!targets.length) { el.innerHTML = '<div class="empty">No printers detected.</div>'; return; }
+        el.innerHTML = '';
+        for (const p of targets) {
+          const t = targetOf(p);
+          const row = document.createElement('div');
+          row.className = 'row';
+          row.innerHTML = `<div><div class="name">${p.name}</div><div class="meta">${t}${p.isDefault ? ' · OS default' : ''}</div></div>`;
+          const test = document.createElement('button'); test.className = 'btn btn-ghost'; test.textContent = 'Test';
+          test.onclick = () => testPrint(t);
+          row.appendChild(test); el.appendChild(row);
+        }
+      }
+
+      async function loadPrinters() {
+        try { targets = await invoke('list_printers'); }
+        catch (e) { setMsg('Could not reach the printer service: ' + e, 'err'); return; }
+        renderChosen(); renderPicker(); renderAll();
+        setStatus(chosen ? 'ready' : 'setup');
+      }
+
+      async function testPrint(target) {
+        const enc = new TextEncoder();
+        const bytes = [0x1b, 0x40, ...enc.encode(`Chittie Companion\nTest receipt\n\n\n`), 0x1d, 0x56, 0x00];
+        const virtual = $('virtual').checked;
+        try {
+          const out = await invoke('print_escpos', { bytes, target: virtual ? 'virtual' : target });
+          if (virtual) { $('preview').innerHTML = `<img src="${out}" alt="receipt preview" />`; setMsg('Rendered a test receipt (no printer used).', 'ok'); }
+          else { $('preview').innerHTML = ''; setMsg(`Printed to ${out}.`, 'ok'); }
+        } catch (e) { setMsg(`Couldn’t print: ${e}`, 'err'); }
+      }
+
+      async function applyBranding() {
+        try {
+          const b = await invoke('branding');
+          if (b?.name) { $('brand-name').textContent = b.name; document.title = b.name; }
+          if (b?.accent) document.documentElement.style.setProperty('--accent', b.accent);
+          if (b?.logoPath) { const i = $('brand-logo'); try { i.src = window.__TAURI__.core.convertFileSrc(b.logoPath); i.style.display = 'inline-block'; } catch {} }
+        } catch {}
+      }
+
+      $('print-test').onclick = () => testPrint(chosen);
+      $('refresh').onclick = loadPrinters;
+      (async () => {
+        try { $('autostart').checked = await invoke('autostart_enabled'); } catch {}
+        $('autostart').onchange = async (e) => { try { await invoke('set_autostart', { enabled: e.target.checked }); } catch (err) { setMsg('Could not change startup setting: ' + err, 'err'); e.target.checked = !e.target.checked; } };
+      })();
       applyBranding();
-      loadPrinters().then(applyBranding); // re-skin dynamically-added buttons
+      loadPrinters();
     </script>
   </body>
 </html>

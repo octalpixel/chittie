@@ -72,6 +72,20 @@ fn list_printers() -> Vec<serde_json::Value> {
     core::list_targets()
 }
 
+/// Run on login as a background menu-bar app (the "start automatically" toggle).
+#[tauri::command]
+fn set_autostart(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
+    use tauri_plugin_autostart::ManagerExt;
+    let m = app.autolaunch();
+    if enabled { m.enable() } else { m.disable() }.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn autostart_enabled(app: tauri::AppHandle) -> Result<bool, String> {
+    use tauri_plugin_autostart::ManagerExt;
+    app.autolaunch().is_enabled().map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run_app() {
     thread::spawn(|| {
@@ -84,6 +98,10 @@ pub fn run_app() {
     });
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
         .setup(|app| {
             let brand = load_branding();
 
@@ -97,7 +115,7 @@ pub fn run_app() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![print_escpos, list_printers, branding])
+        .invoke_handler(tauri::generate_handler![print_escpos, list_printers, branding, set_autostart, autostart_enabled])
         .run(tauri::generate_context!())
         .expect("error while running Chittie Companion");
 }
