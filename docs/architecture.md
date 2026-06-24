@@ -93,11 +93,11 @@ A cafe routes one order to several printers: receipt → counter, food → kitch
 | Non-Latin raster, typographic fold, `formatMoney`, `sanitizeControl` | **shipped** |
 | Software preview: `renderReceipt` + `renderLabel` | **shipped** |
 | Playground (receipt + label tabs) | **shipped** |
-| print-agent (headless, USB/queue/TCP, virtual PNG) | **exists**; core/bin refactor **building** |
-| print-agent core/bin split + `Target` + `POST /print-raw` | **building** (plan in repo) |
-| Tauri companion app (tray + diagnostics/studio UI) | **building** |
-| JS SDK `@angadie/chittie-companion` (discover/print/result, capability-detect) | **building** |
-| Pinned-per-station config + onboarding recipe + no-pin hard-gate + `print()` returns result | **building** |
+| print-agent core/bin split: `chittie_agent::core` (`Target` + `write_to_printer`) + `server::run` + `POST /print-raw` + TCP | **shipped** (cargo build + tests + smoke) |
+| JS SDK `@angadie/chittie-companion` (discover / print-to-station / result, no-pin hard-gate) | **shipped** (npm 0.6.0) |
+| Tauri companion app (embeds core + server + tray + diagnostics UI) | **scaffolded** (`apps/companion`; bundle via CI) |
+| CI: `companion-release.yml` (tauri-action matrix) + headless `print-agent-release.yml` | **shipped** (CI-built artifacts) |
+| Onboarding recipe + capability-detect (`createBestTransport`) | **building** |
 | Virtual printer port (CUPS backend / Windows RedMon) | **designed** (`tools/print-agent/VIRTUAL-PRINTER.md`) |
 | Printer status feedback (paper-out via `DLE EOT`) | **designed** (ROADMAP) |
 
