@@ -170,11 +170,15 @@ fn header(request: &Request, name: &str) -> Option<String> {
 
 fn json_response(status: u16, body: serde_json::Value, cfg: &ServeOptions) -> Resp {
     let mut res = Response::from_string(body.to_string()).with_status_code(status);
-    let headers: [(&[u8], &[u8]); 4] = [
+    let headers: [(&[u8], &[u8]); 5] = [
         (b"Content-Type", b"application/json"),
         (b"Access-Control-Allow-Methods", b"GET, POST, OPTIONS"),
         (b"Access-Control-Allow-Headers", b"content-type, x-agent-token, x-print-target"),
         (b"Access-Control-Allow-Origin", cfg.allow_origin.as_bytes()),
+        // Chrome/Edge Private Network Access: a hosted HTTPS POS reaching localhost
+        // sends a preflight with Access-Control-Request-Private-Network; without this
+        // reply the request is blocked. (localhost itself is already a secure origin.)
+        (b"Access-Control-Allow-Private-Network", b"true"),
     ];
     for (field, value) in headers {
         if let Ok(h) = Header::from_bytes(field, value) {
