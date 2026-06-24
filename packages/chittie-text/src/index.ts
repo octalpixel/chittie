@@ -93,12 +93,20 @@ export function formatMoney(amount: number, options: MoneyOptions = {}): string 
   return sign + (position === 'prefix' ? currency + sp + num : num + sp + currency);
 }
 
+/** Dots per millimetre for a printer resolution (203 DPI → 8, 300 DPI → ~12). */
+export const dotsPerMm = (dpi = 203): number => dpi / 25.4;
+
 /** Options handed to the injected rasterizer. */
 export interface RasterOptions {
+  /** Glyph height in dots (= pixels; 1 raster pixel = 1 printer dot). */
   fontSize?: number;
   bold?: boolean;
   font?: string;
-  /** Max pixel width (printer dot width, e.g. 384 for 58mm, 576 for 80mm). */
+  /** Ordered font fallback chain, e.g. ['Noto Sans Sinhala','Noto Sans Tamil']. */
+  fontFamilies?: string[];
+  /** Printer resolution (informational; the caller derives `fontSize` dots from it). */
+  dpi?: number;
+  /** Max pixel width (printer dot width, e.g. 384 for 58mm, 576 for 80mm) — fit/clip to this. */
   maxWidth?: number;
 }
 

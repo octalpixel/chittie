@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import ReceiptPrinterEncoder from '@angadie/chittie-core';
 import ImageData from '@canvas/image-data';
-import { needsRaster, smartText, rasterizeRow, foldTypographic, sanitizeControl, formatMoney, type TextRasterizer } from '../src/index.js';
+import { needsRaster, smartText, rasterizeRow, foldTypographic, sanitizeControl, formatMoney, dotsPerMm, type TextRasterizer } from '../src/index.js';
 
 function contains(u8: Uint8Array, seq: number[]): boolean {
   const a = Array.from(u8);
@@ -85,4 +85,8 @@ try {
   (globalThis as Record<string, unknown>).Intl = savedIntl;
 }
 
-console.log('✓ chittie-text spike — detect ✓ raster ✓ no-silent-? ✓ rasterizeRow ✓ fold ✓ sanitize ✓ formatMoney(no-Intl) ✓');
+// dotsPerMm: 203 → 8, 300 → ~12 (drives dpi-correct raster sizing)
+assert.ok(Math.abs(dotsPerMm(203) - 8) < 0.01, '203 DPI ≈ 8 dots/mm');
+assert.ok(Math.abs(dotsPerMm(300) - 11.81) < 0.01, '300 DPI ≈ 11.8 dots/mm');
+
+console.log('✓ chittie-text spike — detect ✓ raster ✓ no-silent-? ✓ rasterizeRow ✓ fold ✓ sanitize ✓ formatMoney(no-Intl) ✓ dotsPerMm ✓');

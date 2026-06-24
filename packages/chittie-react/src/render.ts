@@ -25,16 +25,22 @@ export interface RenderOptions {
   columns?: number;
   /** Printable width in dots; defaults to columns × 12 (203 DPI, font A). */
   dotWidth?: number;
+  /** Printer resolution (203/300) — keeps rasterized text the same physical size across printers. */
+  dpi?: number;
+  /** Font fallback chain for rasterized non-Latin text. */
+  fontFamilies?: string[];
   /** Supply to print non-encodable scripts (Sinhala/Tamil/…) as images. */
   rasterizer?: TextRasterizer;
   /** Code page used to decide what's encodable as text (default cp437). */
   codepage?: Codepage;
 }
 
-/** Common thermal printer profiles: characters/line + printable dot width (203 DPI). */
+/** Common thermal printer profiles: characters/line + printable dot width + resolution. */
 export const PRINTER_PROFILES = {
-  '58mm': { columns: 32, dotWidth: 384 },
-  '80mm': { columns: 48, dotWidth: 576 },
+  '58mm': { columns: 32, dotWidth: 384, dpi: 203 },
+  '80mm': { columns: 48, dotWidth: 576, dpi: 203 },
+  '58mm-300': { columns: 48, dotWidth: 576, dpi: 300 },
+  '80mm-300': { columns: 72, dotWidth: 864, dpi: 300 },
 } as const;
 
 /**
@@ -46,9 +52,17 @@ export function render(element: ReactElement, options: RenderOptions = {}): Uint
   const props = (root.props ?? {}) as { width?: number; children?: ReactNode };
   const columns = props.width ?? options.columns ?? 48;
   const dotWidth = options.dotWidth ?? columns * 12;
+  const dpi = options.dpi ?? 203;
   const encoder = new ReceiptPrinterEncoder({ columns });
   encoder.initialize();
-  walk(props.children, encoder, { columns, dotWidth, rasterizer: options.rasterizer, codepage: options.codepage });
+  walk(props.children, encoder, {
+    columns,
+    dotWidth,
+    dpi,
+    fontFamilies: options.fontFamilies,
+    rasterizer: options.rasterizer,
+    codepage: options.codepage,
+  });
   return encoder.encode();
 }
 

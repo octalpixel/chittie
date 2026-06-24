@@ -1,8 +1,12 @@
 import { Fragment, isValidElement, type ReactNode } from 'react';
 import type { BarcodeSymbology, DitherAlgorithm } from '@angadie/chittie-core';
-import { smartText, padTo8, needsRaster, rasterizeRow, foldTypographic, sanitizeControl } from '@angadie/chittie-text';
+import { smartText, padTo8, needsRaster, rasterizeRow, foldTypographic, sanitizeControl, dotsPerMm } from '@angadie/chittie-text';
 
 const clean = (s: string) => foldTypographic(sanitizeControl(s));
+// Base rasterized line height ≈ 3mm; scaled by the printer DPI so non-Latin text
+// is the same physical size on 58/80mm and 203/300-DPI (1 raster px = 1 dot).
+const BASE_MM = 3;
+const rasterPx = (dpi: number, scale = 1) => Math.round(BASE_MM * dotsPerMm(dpi) * scale);
 import type { Encoder, Printable, RenderContext } from './printable.js';
 
 export type Alignment = 'left' | 'center' | 'right';
@@ -66,7 +70,13 @@ export const Text = printable<TextProps>((e, p, ctx) => {
   smartText(e, toText(p.children), {
     rasterizer: ctx.rasterizer,
     codepage: ctx.codepage,
-    raster: { bold: p.bold, fontSize: p.size ? p.size.height * 24 : undefined, maxWidth: ctx.dotWidth },
+    raster: {
+      bold: p.bold,
+      fontSize: rasterPx(ctx.dpi, p.size?.height ?? 1),
+      maxWidth: ctx.dotWidth,
+      dpi: ctx.dpi,
+      fontFamilies: ctx.fontFamilies,
+    },
   });
   if (!p.inline) e.newline();
   if (p.size) e.size(1, 1);
@@ -92,7 +102,12 @@ export const Row = printable<RowProps>((e, p, ctx) => {
         'chittie: <Row> contains non-encodable text (e.g. Sinhala/Tamil). Pass a rasterizer to render(), or use code-page text.'
       );
     }
-    const img = rasterizeRow(ctx.rasterizer, left, right, { dotWidth: ctx.dotWidth });
+    const img = rasterizeRow(ctx.rasterizer, left, right, {
+      dotWidth: ctx.dotWidth,
+      fontSize: rasterPx(ctx.dpi),
+      dpi: ctx.dpi,
+      fontFamilies: ctx.fontFamilies,
+    });
     e.image(img, img.width, img.height);
     return;
   }

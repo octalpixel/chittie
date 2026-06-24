@@ -88,6 +88,8 @@ export interface ImageOptions {
 export interface LabelOptions {
   /** Supply to print non-Latin text (Sinhala/Tamil/…) as a rasterized image. */
   rasterizer?: TextRasterizer;
+  /** Font fallback chain for rasterized non-Latin text. */
+  fontFamilies?: string[];
 }
 
 // ASCII byte encode for the command structure (digits, punctuation, keywords) — RN-safe, no Buffer.
@@ -172,7 +174,8 @@ export function label(profile: LabelProfile, options: LabelOptions = {}): LabelB
     mm: (value) => mmToDots(value, dpi),
 
     text(x, y, value, opts = {}) {
-      const { font = '3', rotation = 0, xMul = 1, yMul = 1, rasterFontSize = 28 } = opts;
+      // default raster height ≈ 3mm scaled to the profile's DPI (1 raster px = 1 dot)
+      const { font = '3', rotation = 0, xMul = 1, yMul = 1, rasterFontSize = Math.round((3 * dpi) / 25.4) } = opts;
       const text = quoteSafe(foldTypographic(String(value)));
       if (needsRaster(text, cp)) {
         if (!options.rasterizer) {
@@ -180,7 +183,12 @@ export function label(profile: LabelProfile, options: LabelOptions = {}): LabelB
             `chittie-label: "${text}" has no code page (e.g. Sinhala/Tamil). Pass a rasterizer to label(profile, { rasterizer }) to print it as an image.`
           );
         }
-        const img = options.rasterizer.rasterize(text, { fontSize: rasterFontSize } as RasterOptions);
+        const img = options.rasterizer.rasterize(text, {
+          fontSize: rasterFontSize,
+          dpi,
+          fontFamilies: options.fontFamilies,
+          maxWidth: mmToDots(profile.widthMm, dpi),
+        } as RasterOptions);
         return builder.image(x, y, img);
       }
       body.push(ascii(`TEXT ${x},${y},"${font}",${rotation},${xMul},${yMul},"`));

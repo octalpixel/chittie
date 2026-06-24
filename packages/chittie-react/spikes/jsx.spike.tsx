@@ -119,6 +119,24 @@ assert.ok(typoAscii.includes('- "special"'), '<Text> folds em-dash + curly quote
 assert.ok(!contains(typo, [0x1d, 0x76, 0x30]) && !contains(typo, [0x1b, 0x2a]), 'no raster image emitted for typographic chars');
 console.log('✓ typographic folding: × — “ ” … render as ASCII (no raster, no throw)');
 
+// --- dpi-aware sizing + fontFamilies threaded to the rasterizer ---
+const captured: Array<{ fontSize?: number; fontFamilies?: string[]; maxWidth?: number }> = [];
+const capRasterizer = {
+  rasterize: (_t: string, o: { fontSize?: number; fontFamilies?: string[]; maxWidth?: number }) => {
+    captured.push(o);
+    return new ImageData(new Uint8ClampedArray(8 * 8 * 4), 8, 8) as unknown as ImageData;
+  },
+};
+const sinhalaText = <Printer width={48}><Text>ආයුබෝවන්</Text></Printer>;
+render(sinhalaText, { rasterizer: capRasterizer, dotWidth: 576, dpi: 203, fontFamilies: ['Noto Sans Sinhala'] });
+render(sinhalaText, { rasterizer: capRasterizer, dotWidth: 864, dpi: 300, fontFamilies: ['Noto Sans Sinhala'] });
+const [at203, at300] = captured;
+assert.equal(at203?.fontFamilies?.[0], 'Noto Sans Sinhala', 'fontFamilies threaded to rasterizer');
+assert.equal(at203?.maxWidth, 576, 'maxWidth = dotWidth');
+assert.ok((at300!.fontSize ?? 0) > (at203!.fontSize ?? 0), '300 DPI font is larger in dots (same physical size)');
+assert.ok(Math.abs((at300!.fontSize ?? 0) / (at203!.fontSize ?? 1) - 300 / 203) < 0.1, 'font scales ~proportional to DPI');
+console.log('✓ dpi-aware sizing: rasterized font scales with DPI; fontFamilies + maxWidth threaded');
+
 // --- <Image>: arbitrary ImageData (non-8 dims) embeds as a raster image ---
 const logo = new ImageData(new Uint8ClampedArray(20 * 10 * 4).fill(0), 20, 10) as unknown as ImageData; // 20x10, not /8
 const withImage = render(

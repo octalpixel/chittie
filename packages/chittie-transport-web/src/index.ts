@@ -176,3 +176,64 @@ export function createBridgeTransport(options: BridgeOptions = {}): Transport {
     },
   };
 }
+
+export interface BestTransportOptions {
+  /** Companion/agent URL probed for availability (default http://localhost:8930). */
+  companionUrl?: string;
+  token?: string;
+  /** Target queue / "usb" for the companion path. */
+  printer?: string;
+  baudRate?: number;
+  /**
+   * Prefer the companion even when Web Serial exists. Default true — the companion
+   * covers USB/queue/network on every browser (incl. Safari/iPad), and most USB
+   * printers can't be claimed by WebUSB/Serial anyway.
+   */
+  preferCompanion?: boolean;
+  /** Injectable fetch (tests / RN). */
+  fetch?: typeof fetch;
+}
+
+export interface BestTransport {
+  transport: Transport;
+  /** Which mechanism was chosen — surface it so the operator knows the path. */
+  kind: 'companion' | 'web-serial';
+}
+
+/**
+ * Choose the transport MECHANISM by capability — deterministic, not a shotgun that
+ * "tries everything and uses whatever connects". Precedence: a reachable companion
+ * (USB/queue/network, works in every browser) → Web Serial (Chromium + a serial/COM
+ * printer) → a clear error. The DEVICE is still pinned by you (`printer`); this only
+ * decides how the bytes leave the browser.
+ */
+export async function createBestTransport(options: BestTransportOptions = {}): Promise<BestTransport> {
+  const doFetch = options.fetch ?? globalThis.fetch;
+  const url = (options.companionUrl ?? 'http://localhost:8930').replace(/\/+$/, '');
+  const preferCompanion = options.preferCompanion ?? true;
+
+  const companionUp = await probeCompanion(url, doFetch);
+  const hasSerial = !!nav().serial;
+  const companion = (): BestTransport => ({
+    kind: 'companion',
+    transport: createBridgeTransport({ url, token: options.token, printer: options.printer }),
+  });
+
+  if (companionUp && (preferCompanion || !hasSerial)) return companion();
+  if (hasSerial) return { kind: 'web-serial', transport: createWebSerialTransport({ baudRate: options.baudRate }) };
+  if (companionUp) return companion();
+  throw new Error(
+    'chittie: no print transport available. Install the chittie companion (works in every browser, including ' +
+      'Safari/iPad), or use Chrome/Edge desktop with a serial printer.'
+  );
+}
+
+async function probeCompanion(url: string, doFetch: typeof fetch): Promise<boolean> {
+  if (typeof doFetch !== 'function') return false;
+  try {
+    const res = await doFetch(`${url}/health`);
+    return res.ok;
+  } catch {
+    return false;
+  }
+}

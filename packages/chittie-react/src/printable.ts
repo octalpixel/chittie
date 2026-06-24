@@ -9,6 +9,10 @@ export interface RenderContext {
   columns: number;
   /** Printable width in dots (e.g. 384 for 58mm, 576 for 80mm) — used when rasterizing. */
   dotWidth: number;
+  /** Printer resolution (203/300) — drives dpi-correct rasterized font sizes. */
+  dpi: number;
+  /** Font fallback chain for rasterized non-Latin text (Sinhala/Tamil/…). */
+  fontFamilies?: string[];
   /** When set, <Text>/<Row> with non-encodable scripts (Sinhala/Tamil/…) is rasterized. */
   rasterizer?: TextRasterizer;
   /** Code page used to decide what's encodable as text (default cp437). */

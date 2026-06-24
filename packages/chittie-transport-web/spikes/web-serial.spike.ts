@@ -2,7 +2,7 @@
 // a mocked navigator.serial (connect requests/opens a port; write goes to the
 // writer; bytes arrive intact).
 import assert from 'node:assert/strict';
-import { createWebSerialTransport, createBridgeTransport } from '../src/index.js';
+import { createWebSerialTransport, createBridgeTransport, createBestTransport } from '../src/index.js';
 
 const writes: number[][] = [];
 let opened = false;
@@ -69,3 +69,18 @@ const sent = JSON.parse(fetchCalls[1]!.init!.body!);
 assert.deepEqual(sent.bytes, [0x1b, 0x40, 0x41], 'bytes sent as number[]');
 assert.equal(sent.printer, 'usb', 'printer forwarded');
 console.log('✓ chittie-transport-web spike — bridge transport POSTs bytes to the print-agent /print contract');
+
+// --- createBestTransport: deterministic capability selection (companion > web-serial > error) ---
+const upFetch = (async () => ({ ok: true })) as unknown as typeof fetch;
+const downFetch = (async () => { throw new Error('refused'); }) as unknown as typeof fetch;
+const withSerial = () => Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { serial: { async getPorts() { return []; }, async requestPort() { return port; } } } });
+const noSerial = () => Object.defineProperty(globalThis, 'navigator', { configurable: true, value: {} });
+
+withSerial();
+assert.equal((await createBestTransport({ fetch: upFetch })).kind, 'companion', 'companion up + default → companion (covers USB/queue/all browsers)');
+assert.equal((await createBestTransport({ fetch: downFetch })).kind, 'web-serial', 'companion down + serial → web-serial');
+assert.equal((await createBestTransport({ fetch: upFetch, preferCompanion: false })).kind, 'web-serial', 'preferCompanion:false + serial → web-serial');
+noSerial();
+await assert.rejects(() => createBestTransport({ fetch: downFetch }), /no print transport available/, 'no companion + no serial → clear error');
+assert.equal((await createBestTransport({ fetch: upFetch })).kind, 'companion', 'no serial + companion up → companion');
+console.log('✓ createBestTransport — capability-detect: companion > web-serial > clear error (not a shotgun)');
