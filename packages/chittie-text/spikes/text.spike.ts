@@ -85,6 +85,10 @@ try {
   (globalThis as Record<string, unknown>).Intl = savedIntl;
 }
 
+// smartText reports whether it rasterized (so callers don't double-feed a self-advancing image)
+assert.equal(smartText(new ReceiptPrinterEncoder({ columns: 32 }) as never, 'Hello', {}), false, 'code-page text → returns false');
+assert.equal(smartText(new ReceiptPrinterEncoder({ columns: 32 }) as never, 'ආයුබෝවන්', { rasterizer: fake }), true, 'rasterized → returns true');
+
 // dotsPerMm: 203 → 8, 300 → ~12 (drives dpi-correct raster sizing)
 assert.ok(Math.abs(dotsPerMm(203) - 8) < 0.01, '203 DPI ≈ 8 dots/mm');
 assert.ok(Math.abs(dotsPerMm(300) - 11.81) < 0.01, '300 DPI ≈ 11.8 dots/mm');

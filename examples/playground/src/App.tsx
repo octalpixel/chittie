@@ -37,13 +37,17 @@ const createCanvas = (w: number, h: number): PreviewCanvas => {
 };
 
 // Browser rasterizer — shapes Sinhala/Tamil/etc. via OS fonts (the differentiator).
+// Tight crop (from font metrics) so a non-Latin line is the same height as a text line.
 const rasterizer: TextRasterizer = {
-  rasterize(text, { fontSize = 30, maxWidth = 576 } = {}) {
-    const probe = document.createElement('canvas').getContext('2d')!;
+  rasterize(text, { fontSize = 28, maxWidth = 576 } = {}) {
     const font = `${fontSize}px "Noto Sans Sinhala","Noto Sans Tamil",sans-serif`;
+    const probe = document.createElement('canvas').getContext('2d')!;
     probe.font = font;
-    const w = Math.min(Math.ceil(probe.measureText(text).width) + 4, maxWidth);
-    const h = Math.ceil(fontSize * 1.5);
+    const m = probe.measureText(text);
+    const ascent = Math.ceil(m.actualBoundingBoxAscent || fontSize * 0.8);
+    const descent = Math.ceil(m.actualBoundingBoxDescent || fontSize * 0.22);
+    const w = Math.min(Math.ceil(m.width) + 4, maxWidth);
+    const h = ascent + descent + 2; // tight: glyph height, no loose padding
     const c = document.createElement('canvas');
     c.width = w;
     c.height = h;
@@ -52,8 +56,8 @@ const rasterizer: TextRasterizer = {
     ctx.fillRect(0, 0, w, h);
     ctx.fillStyle = '#000';
     ctx.font = font;
-    ctx.textBaseline = 'top';
-    ctx.fillText(text, 2, 2);
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(text, 2, ascent + 1);
     return ctx.getImageData(0, 0, w, h);
   },
 };

@@ -67,7 +67,7 @@ export const Text = printable<TextProps>((e, p, ctx) => {
   if (p.size) e.size(p.size.width, p.size.height);
   // smartText prints code-page text, or rasterizes complex scripts when a
   // rasterizer is supplied — and throws (never silent "?") when it isn't.
-  smartText(e, toText(p.children), {
+  const rastered = smartText(e, toText(p.children), {
     rasterizer: ctx.rasterizer,
     codepage: ctx.codepage,
     raster: {
@@ -78,7 +78,9 @@ export const Text = printable<TextProps>((e, p, ctx) => {
       fontFamilies: ctx.fontFamilies,
     },
   });
-  if (!p.inline) e.newline();
+  // A rasterized line already advanced the paper by the image height — adding a
+  // newline too would double-space it. Only feed for code-page text.
+  if (!p.inline && !rastered) e.newline();
   if (p.size) e.size(1, 1);
   if (p.invert) e.invert(false);
   if (p.underline) e.underline(false);

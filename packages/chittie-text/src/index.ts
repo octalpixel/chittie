@@ -155,13 +155,15 @@ export interface SmartTextOptions {
  * rasterized image when it isn't (Sinhala/Tamil/…). If a raster is needed but no
  * rasterizer was supplied, it throws a clear error instead of silently printing "?".
  */
-export function smartText(encoder: EncoderLike, raw: string, options: SmartTextOptions = {}): void {
+// Returns true if the text was rasterized to an image (which self-advances the paper,
+// so the caller should NOT add its own line feed), false if printed as code-page text.
+export function smartText(encoder: EncoderLike, raw: string, options: SmartTextOptions = {}): boolean {
   const codepage = options.codepage ?? 'cp437';
   // sanitize (drop injected control bytes) → fold (× → x, … → ...) → decide text-vs-raster
   const text = foldTypographic(sanitizeControl(raw));
   if (!needsRaster(text, codepage)) {
     encoder.text(text);
-    return;
+    return false;
   }
   if (!options.rasterizer) {
     throw new Error(
@@ -172,6 +174,7 @@ export function smartText(encoder: EncoderLike, raw: string, options: SmartTextO
   }
   const img = padTo8(options.rasterizer.rasterize(text, options.raster ?? {}));
   encoder.image(img, img.width, img.height);
+  return true;
 }
 
 // --- row rasterization (for non-Latin in table cells) ---
