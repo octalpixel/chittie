@@ -51,15 +51,14 @@ jobs:
         with:
           workspaces: './apps/companion/src-tauri -> target'
 
-      # JS toolchain — tauri-action runs `pnpm run tauri build`, which needs
-      # @tauri-apps/cli installed (the companion frontend is static, so no build).
-      - uses: pnpm/action-setup@v4
+      # The companion frontend is a static dist (committed) — no JS build, no
+      # workspace install. tauri-action runs `npm run tauri build`; provide the CLI
+      # globally so the `tauri` script resolves on PATH on every OS.
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: pnpm
-      - name: Install (for @tauri-apps/cli)
-        run: pnpm install --frozen-lockfile
+      - name: Install Tauri CLI
+        run: npm install -g @tauri-apps/cli@^2
 
       # White-label: regenerate the icon set from a brand logo before building.
       - name: Brand icons
