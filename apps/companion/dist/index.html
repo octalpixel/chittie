@@ -159,7 +159,8 @@
       function renderPicker() {
         const el = $('picker');
         if (!targets.length) {
-          el.innerHTML = `<div class="empty">No printer found. Plug your printer in by USB (and turn it on), then open Advanced and tap “Look for printers again”.</div>`;
+          el.innerHTML = `<div class="empty">Looking for your printer… plug it in by USB and turn it on — it'll appear here automatically. <button class="btn btn-ghost" id="look-again">Look now</button></div>`;
+          const la = el.querySelector('#look-again'); if (la) la.onclick = loadPrinters;
           return;
         }
         el.innerHTML = '';
@@ -188,9 +189,14 @@
         }
       }
 
+      let sig = '';
       async function loadPrinters() {
-        try { targets = await invoke('list_printers'); }
+        let next;
+        try { next = await invoke('list_printers'); }
         catch (e) { setMsg('Could not reach the printer service: ' + e, 'err'); return; }
+        const ns = JSON.stringify(next.map((p) => p.name + p.systemName));
+        if (ns === sig) return; // unchanged — don't disrupt the UI / re-render
+        sig = ns; targets = next;
         renderChosen(); renderPicker(); renderAll();
         setStatus(chosen ? 'ready' : 'setup');
       }
@@ -223,6 +229,9 @@
       })();
       applyBranding();
       loadPrinters();
+      // Auto-detect printers plugged in after launch (a store owner won't dig into Advanced).
+      setInterval(loadPrinters, 4000);
+      window.addEventListener('focus', loadPrinters);
     </script>
   </body>
 </html>
