@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chittie Companion</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 720px; margin: 1.5rem auto; padding: 0 1rem; color: #1a1a1a; }
+      h1 { font-size: 1.4rem; } h2 { font-size: 1rem; margin-top: 1.5rem; }
+      .printer { display: flex; align-items: center; gap: .5rem; padding: .4rem 0; border-bottom: 1px solid #eee; }
+      .printer .name { flex: 1; } .pill { font-size: .7rem; background: #eee; border-radius: 4px; padding: 1px 6px; }
+      button { padding: .35rem .7rem; cursor: pointer; }
+      .stations { display: grid; grid-template-columns: auto 1fr auto; gap: .4rem .8rem; align-items: center; }
+      #result { margin-top: 1rem; font-weight: 600; }
+      .ok { color: #137333; } .err { color: #c5221f; } .muted { color: #777; font-size: .85rem; }
+    </style>
+  </head>
+  <body>
+    <h1 id="brand" style="display:flex;align-items:center;gap:.6rem;"><img id="brand-logo" alt="" style="height:32px;display:none;border-radius:6px;" /><span id="brand-name">Chittie Companion</span></h1>
+    <p class="muted">Print bridge running on <code>http://localhost:8930</code>. Pin a printer per station; the POS prints to the pinned target — never the rotating OS default.</p>
+    <p style="display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;">
+      <label style="display:inline-flex;align-items:center;gap:.4rem;"><input type="checkbox" id="virtual" /> Virtual mode — render a PNG instead of printing (test without a printer)</label>
+      <button id="test-btn">Test print</button>
+    </p>
+    <div id="preview" style="margin-top:.8rem;"></div>
+
+    <h2>Printers <button id="refresh">Refresh</button></h2>
+    <div id="printers"></div>
+
+    <h2>Stations</h2>
+    <div class="stations" id="stations"></div>
+
+    <div id="result"></div>
+
+    <script type="module">
+      const invoke = (cmd, args) => window.__TAURI__.core.invoke(cmd, args);
+
+      // White-label: skin name / logo / accent from branding.json (runtime, no rebuild)
+      async function applyBranding() {
+        try {
+          const b = await invoke('branding');
+          if (b?.name) { document.getElementById('brand-name').textContent = b.name; document.title = b.name; }
+          if (b?.accent) {
+            for (const btn of document.querySelectorAll('button')) { btn.style.background = b.accent; btn.style.color = '#fff'; btn.style.border = 'none'; btn.style.borderRadius = '4px'; }
+          }
+          if (b?.logoPath) {
+            try {
+              const url = window.__TAURI__.core.convertFileSrc(b.logoPath);
+              const img = document.getElementById('brand-logo'); img.src = url; img.style.display = 'inline-block';
+            } catch {}
+          }
+        } catch {}
+      }
+
+      const STATIONS = ['receipt', 'kitchen', 'bar'];
+      const KEY = 'chittie_stations_v1';
+      const pins = JSON.parse(localStorage.getItem(KEY) || '{}');
+      const savePins = () => localStorage.setItem(KEY, JSON.stringify(pins));
+      const setResult = (msg, cls) => { const r = document.getElementById('result'); r.textContent = msg; r.className = cls || ''; };
+
+      let targets = [];
+      async function loadPrinters() {
+        try {
+          targets = await invoke('list_printers');
+          const el = document.getElementById('printers');
+          el.innerHTML = '';
+          if (!targets.length) { el.innerHTML = '<p class="muted">No printers found. Install the printer driver, then Refresh.</p>'; }
+          for (const p of targets) {
+            const target = p.transport === 'usb' ? 'usb' : p.systemName;
+            const row = document.createElement('div');
+            row.className = 'printer';
+            row.innerHTML = `<span class="name">${p.name}</span>${p.isDefault ? '<span class="pill">OS default</span>' : ''}`;
+            const test = document.createElement('button');
+            test.textContent = 'Test print';
+            test.onclick = () => testPrint(target);
+            row.appendChild(test);
+            el.appendChild(row);
+          }
+          renderStations();
+        } catch (e) { setResult('Could not list printers: ' + e, 'err'); }
+      }
+
+      function renderStations() {
+        const el = document.getElementById('stations');
+        el.innerHTML = '';
+        for (const s of STATIONS) {
+          const label = document.createElement('label'); label.textContent = s;
+          const sel = document.createElement('select');
+          sel.innerHTML = '<option value="">— none —</option>' +
+            targets.map(p => { const t = p.transport === 'usb' ? 'usb' : p.systemName; return `<option value="${t}" ${pins[s] === t ? 'selected' : ''}>${p.name}</option>`; }).join('');
+          sel.onchange = () => { if (sel.value) pins[s] = sel.value; else delete pins[s]; savePins(); };
+          const test = document.createElement('button');
+          test.textContent = 'Test';
+          test.onclick = () => {
+            if (!pins[s] && !document.getElementById('virtual').checked) return setResult(`Pin a printer for "${s}" first`, 'err');
+            testPrint(pins[s] || 'default');
+          };
+          el.append(label, sel, test);
+        }
+      }
+
+      async function testPrint(target) {
+        // ESC @ (init) + text + feed + GS V 0 (cut)
+        const enc = new TextEncoder();
+        const text = enc.encode(`Chittie Companion\nTest -> ${target}\n\n\n`);
+        const bytes = [0x1b, 0x40, ...text, 0x1d, 0x56, 0x00];
+        const virtual = document.getElementById('virtual').checked;
+        try {
+          const out = await invoke('print_escpos', { bytes, target: virtual ? 'virtual' : target });
+          if (virtual) {
+            document.getElementById('preview').innerHTML = `<img src="${out}" style="max-width:100%;border:1px solid #ddd;" />`;
+            setResult('✓ Rendered (virtual) — no printer used', 'ok');
+          } else {
+            document.getElementById('preview').innerHTML = '';
+            setResult(`✓ Printed → ${out}`, 'ok');
+          }
+        } catch (e) { setResult(`✗ ${e}`, 'err'); }
+      }
+
+      document.getElementById('refresh').onclick = loadPrinters;
+      document.getElementById('test-btn').onclick = () => {
+        const first = Object.values(pins)[0] || (targets[0] && (targets[0].transport === 'usb' ? 'usb' : targets[0].systemName)) || 'default';
+        testPrint(first); // in Virtual mode the target is ignored (renders a PNG)
+      };
+      applyBranding();
+      loadPrinters().then(applyBranding); // re-skin dynamically-added buttons
+    </script>
+  </body>
+</html>

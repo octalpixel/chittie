@@ -52,10 +52,17 @@ fn branding() -> Branding {
     load_branding()
 }
 
-/// Print raw ESC/POS or TSPL bytes to a target. Used by the in-app diagnostics UI
-/// and any vendor frontend running inside this window.
+/// Print raw ESC/POS bytes to a target. `target: "virtual"` renders a PNG instead of
+/// printing (the UI's Virtual-mode toggle) and returns its file path; otherwise writes
+/// to the printer and returns the printer name.
 #[tauri::command]
 fn print_escpos(bytes: Vec<u8>, target: Option<String>) -> Result<String, String> {
+    if target.as_deref() == Some("virtual") {
+        use base64::Engine;
+        let png = chittie_agent::render::render_png(&bytes, 48).map_err(|e| format!("render: {e}"))?;
+        let b64 = base64::engine::general_purpose::STANDARD.encode(&png);
+        return Ok(format!("data:image/png;base64,{b64}"));
+    }
     core::write_to_printer(&bytes, &Target::parse(target.as_deref())).map(|p| p.printer)
 }
 

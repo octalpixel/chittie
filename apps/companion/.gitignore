@@ -2,3 +2,5 @@ branding/20*/
 src-tauri/target/
 src-tauri/gen/
 icons/acme/
+!dist/
+!dist/**
