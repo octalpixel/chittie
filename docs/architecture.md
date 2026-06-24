@@ -16,7 +16,7 @@ Rust **core**, reused by three shells:
             │  @angadie/chittie (ESC/POS receipts) · @angadie/chittie-label (TSPL tags)  [shipped] │
             └───────────────────────────────────────────┬───────────────────────────────────────-┘
                                                          │ Uint8Array
-   ┌─────────────────────────── chittie-core (Rust) ───────────────────────────┐  [building]
+   ┌──────────────────────── print-agent core (Rust) ──────────────────────────┐  [building]
    │  write_to_printer(bytes, target) · render_png(bytes) · discover()          │
    └───────┬───────────────────────────┬───────────────────────────┬───────────┘
            │                           │                           │
@@ -29,15 +29,18 @@ Rust **core**, reused by three shells:
                                           web POS → discover · print(bytes,{station}) → result
 ```
 
-- **chittie-core (Rust)** — the only place that touches hardware. `Target = Default | Usb |
+- **print-agent core (Rust)** — the only place that touches hardware. `Target = Default | Usb |
   Queue(name) | Tcp(host:port)`. Embeddable. (Refactor plan: `tools/print-agent` core/bin split.)
+  ⚠️ Distinct from the **JS** package `@angadie/chittie-core` (the vendored ESC/POS *byte-builder*,
+  top of the diagram). Byte-building is JS (runs in the browser/RN, universal); only the *delivery*
+  to hardware is Rust (native OS APIs, tiny binary, embeds in Tauri).
 - **(a) Headless agent** — HTTP server over the core; install as an auto-start service. For
   automation, or vendors who want no UI.
 - **(b) Tauri companion app** — the **official turnkey product**: system tray + embedded server +
   a diagnostics/studio window (printer list, per-station pin, test print, virtual-mode preview,
   "last printed → where" log). **This is also the dev studio** — production control panel and
   virtual/preview in one app.
-- **(c) Vendor's own app** — **Tauri** embeds chittie-core directly (zero IPC; what ordereka did).
+- **(c) Vendor's own app** — **Tauri** embeds the print-agent core directly (zero IPC; what ordereka did).
   **Electron** sidecars the headless binary or talks to a running companion over HTTP.
 - **JS SDK** (`@angadie/chittie-companion`) — the web POS talks to whichever shell is running.
 
@@ -91,7 +94,7 @@ A cafe routes one order to several printers: receipt → counter, food → kitch
 | Software preview: `renderReceipt` + `renderLabel` | **shipped** |
 | Playground (receipt + label tabs) | **shipped** |
 | print-agent (headless, USB/queue/TCP, virtual PNG) | **exists**; core/bin refactor **building** |
-| chittie-core split + `Target` + `POST /print-raw` | **building** (plan in repo) |
+| print-agent core/bin split + `Target` + `POST /print-raw` | **building** (plan in repo) |
 | Tauri companion app (tray + diagnostics/studio UI) | **building** |
 | JS SDK `@angadie/chittie-companion` (discover/print/result, capability-detect) | **building** |
 | Pinned-per-station config + onboarding recipe + no-pin hard-gate + `print()` returns result | **building** |
@@ -99,7 +102,7 @@ A cafe routes one order to several printers: receipt → counter, food → kitch
 | Printer status feedback (paper-out via `DLE EOT`) | **designed** (ROADMAP) |
 
 ## 5. Sequencing
-1. chittie-core split + `Target` + `/print-raw` + `print()`-returns-result.
+1. print-agent core/bin split + `Target` + `/print-raw` + `print()`-returns-result.
 2. JS SDK (discover, print-to-pinned-target, result) + capability detection.
 3. Tauri companion app = embedded core + diagnostics/studio UI + per-station config + onboarding.
 4. Multi-station (KOT/BOT) config + templates.
