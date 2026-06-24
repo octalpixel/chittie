@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Printer,
   Text,
@@ -22,8 +22,11 @@ import {
   mmToDots,
 } from '@angadie/chittie-label-react';
 import { renderReceipt, renderLabel, type PreviewCanvas } from '@angadie/chittie-preview';
-import { print } from '@angadie/chittie-transport';
-import { createWebSerialTransport } from '@angadie/chittie-transport-web';
+import { createCompanionClient, type PrinterInfo } from '@angadie/chittie-companion';
+
+// Print through the running Chittie Companion (localhost:8930) — works for USB
+// printer-class devices (like the N32G43x) that Web Serial can't reach.
+const companion = createCompanionClient({ url: 'http://localhost:8930' });
 
 const createCanvas = (w: number, h: number): PreviewCanvas => {
   const c = document.createElement('canvas');
@@ -54,17 +57,17 @@ const rasterizer: TextRasterizer = {
   },
 };
 
-async function printBytes(bytes: Uint8Array) {
-  try {
-    await print(createWebSerialTransport(), bytes);
-  } catch (e) {
-    alert('Print cancelled / failed: ' + (e as Error).message);
-  }
+const targetOf = (p: PrinterInfo) => (p.transport === 'usb' ? 'usb' : p.systemName);
+
+async function printBytes(bytes: Uint8Array, target: string) {
+  const res = await companion.print(bytes, target ? { target } : {});
+  if (res.printed) alert(`✓ Printed → ${res.target}`);
+  else alert(`✗ ${res.reason}`);
 }
 
 const I = { width: 140 } as const;
 
-function ReceiptTab() {
+function ReceiptTab({ target }: { target: string }) {
   const [biz, setBiz] = useState('Artisan Haus');
   const [greeting, setGreeting] = useState('ආයුබෝවන්');
   const [profile, setProfile] = useState<'58mm' | '80mm'>('80mm');
@@ -120,14 +123,14 @@ function ReceiptTab() {
           </div>
         ))}
         <button onClick={() => setItems((xs) => [...xs, { name: 'Item', qty: 1, price: 100 }])}>+ item</button>
-        <p><button onClick={() => printBytes(bytes)} style={{ padding: '0.5rem 1rem' }}>Print via Web Serial</button> <span style={{ color: '#888' }}>{bytes.length} bytes</span></p>
+        <p><button onClick={() => printBytes(bytes, target)} disabled={!target} style={{ padding: '0.5rem 1rem' }}>Print receipt</button> <span style={{ color: '#888' }}>{bytes.length} bytes</span></p>
       </div>
       <div>{png ? <img src={png} alt="receipt" style={{ width: '100%', border: '1px solid #ddd' }} /> : '—'}</div>
     </div>
   );
 }
 
-function LabelTab() {
+function LabelTab({ target }: { target: string }) {
   const [name, setName] = useState('Silk Saree');
   const [price, setPrice] = useState(8500);
   const [gtin, setGtin] = useState('4791234567890');
@@ -166,7 +169,7 @@ function LabelTab() {
         <p><label>Price <input type="number" value={price} onChange={(e) => setPrice(+e.target.value)} style={{ width: 90 }} /></label></p>
         <p><label>GTIN/EAN-13 <input value={gtin} onChange={(e) => setGtin(e.target.value)} style={I} /></label></p>
         <p>Tag size <select value={size} onChange={(e) => setSize(e.target.value as typeof size)}><option>40x30</option><option>50x30</option><option>60x40</option></select> mm</p>
-        <p><button onClick={() => printBytes(bytes)} style={{ padding: '0.5rem 1rem' }}>Print via Web Serial (TSPL)</button> <span style={{ color: '#888' }}>{bytes.length} bytes</span></p>
+        <p><button onClick={() => printBytes(bytes, target)} disabled={!target} style={{ padding: '0.5rem 1rem' }}>Print label (TSPL)</button> <span style={{ color: '#888' }}>{bytes.length} bytes</span></p>
         <p style={{ color: '#888', fontSize: 13 }}>Barcode/QR shown as a representative preview; the bytes are real TSPL — scan-accurate on the printer.</p>
       </div>
       <div>{png ? <img src={png} alt="label" style={{ width: widthDots, maxWidth: '100%', border: '1px solid #ddd', imageRendering: 'pixelated' }} /> : '—'}</div>
@@ -176,23 +179,53 @@ function LabelTab() {
 
 export default function App() {
   const [tab, setTab] = useState<'receipt' | 'label'>('receipt');
+  const [up, setUp] = useState<boolean | null>(null);
+  const [printers, setPrinters] = useState<PrinterInfo[]>([]);
+  const [target, setTarget] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      const ok = await companion.available();
+      setUp(ok);
+      if (!ok) return;
+      const ps = await companion.printers();
+      setPrinters(ps);
+      if (ps[0]) setTarget(targetOf(ps[0]));
+    })();
+  }, []);
+
   const tabBtn = (id: 'receipt' | 'label', text: string) => (
     <button onClick={() => setTab(id)} style={{ padding: '0.5rem 1rem', fontWeight: tab === id ? 700 : 400, borderBottom: tab === id ? '2px solid #000' : 'none' }}>
       {text}
     </button>
   );
+
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', maxWidth: 900, margin: '2rem auto', padding: '0 1rem' }}>
       <h1>chittie playground</h1>
       <p style={{ color: '#555' }}>
-        Author → bytes → live preview → print (Web Serial). Receipts speak ESC/POS; labels speak TSPL.
-        Non-Latin scripts (Sinhala/Tamil) auto-rasterize — what other libraries can't do.
+        Author → bytes → live preview → print through the Chittie Companion. Receipts speak ESC/POS;
+        labels speak TSPL. Non-Latin scripts (Sinhala/Tamil) auto-rasterize.
       </p>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', margin: '0 0 1.25rem', fontSize: 14 }}>
+        <span style={{ color: up ? '#137333' : '#b91c1c' }}>
+          {up === null ? 'Connecting to companion…' : up ? '● Companion connected' : '● Companion not found'}
+        </span>
+        {up && printers.length > 0 && (
+          <label>Printer <select value={target} onChange={(e) => setTarget(e.target.value)}>
+            {printers.map((p, i) => <option key={i} value={targetOf(p)}>{p.name}</option>)}
+          </select></label>
+        )}
+        {up === false && <span style={{ color: '#888' }}>Start the Chittie Companion app, then reload.</span>}
+        {up && printers.length === 0 && <span style={{ color: '#888' }}>No printer detected — plug one in and reload.</span>}
+      </div>
+
       <div style={{ marginBottom: '1.5rem', borderBottom: '1px solid #eee' }}>
         {tabBtn('receipt', 'Receipt')}
         {tabBtn('label', 'Label / Tag')}
       </div>
-      {tab === 'receipt' ? <ReceiptTab /> : <LabelTab />}
+      {tab === 'receipt' ? <ReceiptTab target={target} /> : <LabelTab target={target} />}
     </div>
   );
 }
