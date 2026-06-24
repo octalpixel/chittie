@@ -86,6 +86,14 @@ fn autostart_enabled(app: tauri::AppHandle) -> Result<bool, String> {
     app.autolaunch().is_enabled().map_err(|e| e.to_string())
 }
 
+/// Show + focus the main window (from the tray icon / menu).
+fn show_main(app: &tauri::AppHandle) {
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.show();
+        let _ = w.set_focus();
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run_app() {
     thread::spawn(|| {
@@ -110,10 +118,45 @@ pub fn run_app() {
             if let Some(win) = app.get_webview_window("main") {
                 let _ = win.set_title(&brand.name);
             }
+
+            // Tray menu: left-click (or "Open") shows the window; "Quit" actually exits.
+            // Closing the window only hides it (see on_window_event) so the print server
+            // keeps running in the background — the store owner sets it up once.
+            let open_i = tauri::menu::MenuItem::with_id(app, "open", "Open Chittie", true, None::<&str>)?;
+            let quit_i = tauri::menu::MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+            let menu = tauri::menu::Menu::with_items(app, &[&open_i, &quit_i])?;
             if let Some(icon) = app.default_window_icon().cloned() {
-                tauri::tray::TrayIconBuilder::new().icon(icon).tooltip(&brand.tooltip).build(app)?;
+                tauri::tray::TrayIconBuilder::new()
+                    .icon(icon)
+                    .tooltip(&brand.tooltip)
+                    .menu(&menu)
+                    .show_menu_on_left_click(false)
+                    .on_menu_event(|app, event| match event.id.as_ref() {
+                        "open" => show_main(app),
+                        "quit" => app.exit(0),
+                        _ => {}
+                    })
+                    .on_tray_icon_event(|tray, event| {
+                        if let tauri::tray::TrayIconEvent::Click {
+                            button: tauri::tray::MouseButton::Left,
+                            button_state: tauri::tray::MouseButtonState::Up,
+                            ..
+                        } = event
+                        {
+                            show_main(tray.app_handle());
+                        }
+                    })
+                    .build(app)?;
             }
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                // Hide to tray instead of quitting — keeps the print server alive so the
+                // POS can still print even after the owner "closes" the window.
+                api.prevent_close();
+                let _ = window.hide();
+            }
         })
         .invoke_handler(tauri::generate_handler![print_escpos, list_printers, branding, set_autostart, autostart_enabled])
         .run(tauri::generate_context!())
