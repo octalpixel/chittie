@@ -1,5 +1,18 @@
 # @angadie/chittie-react
 
+## 0.7.0
+
+### Minor Changes
+
+- 5de524c: Fix double-spacing of non-Latin lines. `smartText` now returns whether it rasterized;
+  `<Text>` skips its trailing line-feed when the content was rasterized (a raster image
+  already advances the paper, so feeding again double-spaced every Sinhala/Tamil line).
+
+### Patch Changes
+
+- Updated dependencies [5de524c]
+  - @angadie/chittie-text@0.7.0
+
 ## 0.6.0
 
 ### Minor Changes

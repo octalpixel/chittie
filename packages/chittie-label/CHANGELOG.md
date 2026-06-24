@@ -1,5 +1,12 @@
 # @angadie/chittie-label
 
+## 0.6.1
+
+### Patch Changes
+
+- Updated dependencies [5de524c]
+  - @angadie/chittie-text@0.7.0
+
 ## 0.6.0
 
 ### Minor Changes

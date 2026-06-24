@@ -1,6 +1,6 @@
 {
   "name": "@angadie/chittie-label-react",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Pure JSX authoring for TSPL labels → bytes. Positioned <LText>/<LBarcode>/<LQR>/<LBox>/<LImage> on a <Label>. RN-safe (no react-dom). Renders onto chittie-label.",
   "license": "MIT",
   "type": "module",
