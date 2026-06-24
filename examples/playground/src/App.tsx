@@ -98,7 +98,7 @@ const I = { width: 140 } as const;
 function ReceiptTab({ target, logo }: { target: string; logo: ImageData | null }) {
   const [biz, setBiz] = useState('Artisan Haus');
   const [greeting, setGreeting] = useState('ආයුබෝවන්');
-  const [profile, setProfile] = useState<'58mm' | '80mm'>('80mm');
+  const [profile, setProfile] = useState<'58mm' | '80mm'>('58mm');
   const [items, setItems] = useState([
     { name: 'Flat White', qty: 2, price: 850 },
     { name: 'Croissant', qty: 1, price: 650 },
