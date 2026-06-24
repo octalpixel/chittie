@@ -98,6 +98,22 @@ importers:
         specifier: ^4.19.2
         version: 4.22.4
 
+  examples/rasterizers:
+    dependencies:
+      '@angadie/chittie-text':
+        specifier: workspace:*
+        version: link:../../packages/chittie-text
+      '@napi-rs/canvas':
+        specifier: ^0.1.65
+        version: 0.1.100
+    devDependencies:
+      tsx:
+        specifier: ^4.19.2
+        version: 4.22.4
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+
   examples/react-native:
     dependencies:
       '@angadie/chittie':

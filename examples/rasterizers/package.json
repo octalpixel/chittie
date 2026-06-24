@@ -1,0 +1,17 @@
+{
+  "name": "@angadie/example-rasterizers",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "tsx spikes/canvas.spike.ts"
+  },
+  "dependencies": {
+    "@angadie/chittie-text": "workspace:*",
+    "@napi-rs/canvas": "^0.1.65"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
