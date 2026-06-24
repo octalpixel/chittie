@@ -5,7 +5,8 @@ import assert from 'node:assert/strict';
 import { ReceiptPrinterEncoder } from '@angadie/chittie';
 import { smartText, type TextRasterizer } from '@angadie/chittie-text';
 import ImageData from '@canvas/image-data';
-import { renderReceipt, type PreviewContext2D } from '../src/index.js';
+import { label, LABEL_PROFILES } from '@angadie/chittie-label';
+import { renderReceipt, renderLabel, type PreviewContext2D } from '../src/index.js';
 
 // a rasterizer that returns a small image with real black pixels
 const rasterizer: TextRasterizer = {
@@ -65,3 +66,35 @@ assert.ok(strokes >= 1, 'barcode box stroked');
 
 console.log('✓ chittie-preview spike — column-image + barcode + text rendered, no desync');
 console.log(`  ${bytes.length} ESC/POS bytes → ${texts.length} glyphs, ${rects} image px, canvas ${canvas.width}x${canvas.height}`);
+
+// --- label preview: TSPL bytes → canvas (renderLabel) ---
+const labelBytes = label({ ...LABEL_PROFILES['40x30'], density: 8 }, { rasterizer })
+  .box(0, 0, 320, 240, 2)
+  .text(16, 16, 'ARTISAN HAUS', { font: '3' })
+  .text(16, 72, 'Rs. 4,500', { font: '4', yMul: 2 })
+  .barcode(16, 128, '4791234567890', { type: 'ean13', height: 50 })
+  .qrcode(224, 16, 'https://shop.lk/p/SKU123', { cell: 4 })
+  .text(16, 196, 'සිල්ක්') // non-Latin → BITMAP
+  .encode();
+
+const ltexts: string[] = [];
+let lrects = 0;
+const lctx: PreviewContext2D = {
+  fillStyle: '', strokeStyle: '', font: '', textBaseline: '',
+  fillRect: () => { lrects++; },
+  strokeRect: () => {},
+  fillText: (t) => { ltexts.push(t); },
+  setLineDash: () => {}, beginPath: () => {}, moveTo: () => {}, lineTo: () => {}, stroke: () => {},
+};
+const lcanvas = renderLabel(labelBytes, { createCanvas: (w, h) => ({ width: w, height: h, getContext: () => lctx }) });
+const lj = ltexts.join('');
+
+assert.equal(lcanvas.width, 320, '40mm @203dpi → 320 dots');
+assert.equal(lcanvas.height, 240, '30mm @203dpi → 240 dots');
+assert.ok(lj.includes('ARTISAN HAUS'), 'TEXT rendered');
+assert.ok(lj.includes('Rs. 4,500'), 'magnified TEXT rendered');
+assert.ok(lj.includes('4791234567890'), 'barcode human-readable text');
+assert.ok(lrects > 100, `box + bars + QR modules + BITMAP pixels drawn (got ${lrects})`);
+
+console.log('✓ chittie-preview label spike — TSPL → canvas: TEXT ✓ BARCODE ✓ QR ✓ BOX ✓ BITMAP ✓');
+console.log(`  ${labelBytes.length} TSPL bytes → ${ltexts.length} texts, ${lrects} rects, canvas ${lcanvas.width}x${lcanvas.height}`);

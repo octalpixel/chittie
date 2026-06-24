@@ -35,6 +35,9 @@ importers:
       '@angadie/chittie':
         specifier: workspace:*
         version: link:../../packages/chittie
+      '@angadie/chittie-label-react':
+        specifier: workspace:*
+        version: link:../../packages/chittie-label-react
       '@angadie/chittie-preview':
         specifier: workspace:*
         version: link:../../packages/chittie-preview
@@ -205,6 +208,9 @@ importers:
       '@angadie/chittie':
         specifier: workspace:*
         version: link:../chittie
+      '@angadie/chittie-label':
+        specifier: workspace:*
+        version: link:../chittie-label
       '@angadie/chittie-text':
         specifier: workspace:*
         version: link:../chittie-text

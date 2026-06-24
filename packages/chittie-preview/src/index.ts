@@ -208,3 +208,160 @@ export function renderReceipt(bytes: Uint8Array, options: PreviewOptions): Previ
   }
   return canvas;
 }
+
+// ---------------------------------------------------------------------------
+// Label preview — render the TSPL bytes chittie-label emits to a canvas.
+// ---------------------------------------------------------------------------
+
+export interface LabelPreviewOptions {
+  createCanvas: (width: number, height: number) => PreviewCanvas;
+  /** Printer resolution; sets the dot grid. 203 → 8 dots/mm, 300 → 12. Default 203. */
+  dpi?: 203 | 300;
+  /** Font family for TEXT (default 'sans-serif'). */
+  fontFamily?: string;
+  /** Fallback canvas size (dots) when the stream has no SIZE. Default 320×240. */
+  fallback?: { width: number; height: number };
+}
+
+type LOp =
+  | { k: 'text'; x: number; y: number; px: number; content: string }
+  | { k: 'box'; x: number; y: number; w: number; h: number; t: number }
+  | { k: 'bar'; x: number; y: number; w: number; h: number }
+  | { k: 'barcode'; x: number; y: number; h: number; human: number; data: string }
+  | { k: 'qr'; x: number; y: number; cell: number; data: string }
+  | { k: 'img'; x: number; y: number; blacks: Array<[number, number]> };
+
+const FONT_PX: Record<string, number> = { '1': 12, '2': 16, '3': 20, '4': 28, '5': 40 };
+
+function parseLabel(bytes: Uint8Array, dpi: number, fallback: { width: number; height: number }) {
+  const n = bytes.length;
+  const at = (i: number) => bytes[i] ?? 0;
+  const sub = (a: number, b: number) => Array.from(bytes.subarray(a, b), (c) => String.fromCharCode(c)).join('');
+  const dotsPerMm = dpi / 25.4;
+  let width = fallback.width;
+  let height = fallback.height;
+  const ops: LOp[] = [];
+  let i = 0;
+  while (i < n) {
+    if (at(i) === 0x0d || at(i) === 0x0a) {
+      i++;
+      continue;
+    }
+    // keyword = leading A–Z run
+    let k = i;
+    while (k < n && at(k) >= 0x41 && at(k) <= 0x5a) k++;
+    const word = sub(i, k);
+    if (word === 'BITMAP') {
+      // BITMAP x,y,wBytes,h,mode,<binary>
+      let j = k;
+      const nums: number[] = [];
+      let cur = '';
+      while (nums.length < 5 && j < n) {
+        const c = at(j);
+        if (c >= 0x30 && c <= 0x39) cur += String.fromCharCode(c);
+        else if (c === 0x2c) {
+          nums.push(Number(cur));
+          cur = '';
+        }
+        j++;
+      }
+      const [x = 0, y = 0, wBytes = 0, h = 0] = nums;
+      const start = j;
+      const blacks: Array<[number, number]> = [];
+      for (let row = 0; row < h; row++)
+        for (let col = 0; col < wBytes * 8; col++) {
+          const byte = at(start + row * wBytes + (col >> 3));
+          if (!((byte >> (7 - (col & 7))) & 1)) blacks.push([col, row]); // bit 0 = black
+        }
+      ops.push({ k: 'img', x, y, blacks });
+      i = start + wBytes * h;
+      continue;
+    }
+    // text command: read to end of line
+    let e = i;
+    while (e < n && at(e) !== 0x0a && at(e) !== 0x0d) e++;
+    const line = sub(i, e);
+    i = e + 1;
+    let m: RegExpMatchArray | null;
+    if ((m = line.match(/^SIZE ([\d.]+) mm,([\d.]+) mm/))) {
+      width = Math.round(Number(m[1]) * dotsPerMm);
+      height = Math.round(Number(m[2]) * dotsPerMm);
+    } else if ((m = line.match(/^TEXT (\d+),(\d+),"([^"]*)",(\d+),(\d+),(\d+),"(.*)"$/))) {
+      const px = (FONT_PX[m[3]!] ?? 20) * Number(m[6]);
+      ops.push({ k: 'text', x: +m[1]!, y: +m[2]!, px, content: m[7]! });
+    } else if ((m = line.match(/^BARCODE (\d+),(\d+),"[^"]*",(\d+),(\d+),\d+,\d+,\d+,"(.*)"$/))) {
+      ops.push({ k: 'barcode', x: +m[1]!, y: +m[2]!, h: +m[3]!, human: +m[4]!, data: m[5]! });
+    } else if ((m = line.match(/^QRCODE (\d+),(\d+),[LMQH],(\d+),\w,\d+,"(.*)"$/))) {
+      ops.push({ k: 'qr', x: +m[1]!, y: +m[2]!, cell: +m[3]!, data: m[4]! });
+    } else if ((m = line.match(/^BOX (\d+),(\d+),(\d+),(\d+),(\d+)/))) {
+      ops.push({ k: 'box', x: +m[1]!, y: +m[2]!, w: +m[3]! - +m[1]!, h: +m[4]! - +m[2]!, t: +m[5]! });
+    } else if ((m = line.match(/^BAR (\d+),(\d+),(\d+),(\d+)/))) {
+      ops.push({ k: 'bar', x: +m[1]!, y: +m[2]!, w: +m[3]!, h: +m[4]! });
+    }
+  }
+  return { ops, width, height };
+}
+
+/** Render TSPL bytes (from chittie-label `encode()` / chittie-label-react `render()`) to a canvas. */
+export function renderLabel(bytes: Uint8Array, options: LabelPreviewOptions): PreviewCanvas {
+  const dpi = options.dpi ?? 203;
+  const fontFamily = options.fontFamily ?? 'sans-serif';
+  const fallback = options.fallback ?? { width: 320, height: 240 };
+  const { ops, width, height } = parseLabel(bytes, dpi, fallback);
+
+  const canvas = options.createCanvas(width, height);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('chittie-preview: createCanvas returned no 2d context');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, width, height);
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = '#000';
+
+  for (const op of ops) {
+    if (op.k === 'text') {
+      ctx.fillStyle = '#000';
+      ctx.font = `${op.px}px ${fontFamily}`;
+      ctx.fillText(op.content, op.x, op.y);
+    } else if (op.k === 'bar') {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(op.x, op.y, op.w, op.h);
+    } else if (op.k === 'box') {
+      ctx.fillStyle = '#000';
+      const t = Math.max(1, op.t);
+      ctx.fillRect(op.x, op.y, op.w, t); // top
+      ctx.fillRect(op.x, op.y + op.h - t, op.w, t); // bottom
+      ctx.fillRect(op.x, op.y, t, op.h); // left
+      ctx.fillRect(op.x + op.w - t, op.y, t, op.h); // right
+    } else if (op.k === 'img') {
+      ctx.fillStyle = '#000';
+      for (const [px, py] of op.blacks) ctx.fillRect(op.x + px, op.y + py, 1, 1);
+    } else if (op.k === 'barcode') {
+      // representative bars (preview, not scan-accurate) + human-readable text
+      ctx.fillStyle = '#000';
+      let bx = op.x;
+      for (let c = 0; c < op.data.length * 3 && bx < op.x + op.data.length * 12; c++) {
+        const w = ((op.data.charCodeAt(c % op.data.length) >> (c % 4)) & 1) + 1;
+        if (c % 2 === 0) ctx.fillRect(bx, op.y, w, op.h);
+        bx += w + 1;
+      }
+      if (op.human) {
+        ctx.font = `16px ${fontFamily}`;
+        ctx.fillText(op.data, op.x, op.y + op.h + 2);
+      }
+    } else {
+      // QR placeholder: finder squares + deterministic module grid
+      ctx.fillStyle = '#000';
+      const modules = 21;
+      const c = op.cell;
+      for (let r = 0; r < modules; r++)
+        for (let q = 0; q < modules; q++) {
+          const finder = (r < 7 && q < 7) || (r < 7 && q >= modules - 7) || (r >= modules - 7 && q < 7);
+          const on = finder
+            ? r === 0 || r === 6 || q === 0 || q === 6 || (r >= 2 && r <= 4 && q >= 2 && q <= 4)
+            : ((op.data.charCodeAt((r * modules + q) % op.data.length) >> (q % 7)) & 1) === 1;
+          if (on) ctx.fillRect(op.x + q * c, op.y + r * c, c, c);
+        }
+    }
+  }
+  return canvas;
+}
