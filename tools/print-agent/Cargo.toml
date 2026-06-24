@@ -4,6 +4,11 @@ version = "0.1.0"
 edition = "2024"
 description = "Chittie print agent — localhost raw ESC/POS bridge for thermal printers"
 
+# Embeddable core (lift into a Tauri command / CLI), shared by the bin below.
+[lib]
+name = "chittie_agent"
+path = "src/lib.rs"
+
 [[bin]]
 name = "chittie-print-agent"
 path = "src/main.rs"

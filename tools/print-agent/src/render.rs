@@ -102,8 +102,21 @@ fn parse(bytes: &[u8]) -> Receipt {
     Receipt { lines, cut, drawer }
 }
 
+/// Render ESC/POS bytes to PNG bytes (in-process / for serving over HTTP).
+pub fn render_png(bytes: &[u8], width_chars: u32) -> Result<Vec<u8>, ImageError> {
+    let img = render_image(bytes, width_chars);
+    let mut buf = Vec::new();
+    img.write_to(&mut std::io::Cursor::new(&mut buf), ImageFormat::Png)?;
+    Ok(buf)
+}
+
 /// Render ESC/POS bytes to a PNG file. `width_chars` is 48 (80mm) or 32 (58mm).
 pub fn render_png_to(bytes: &[u8], path: &Path, width_chars: u32) -> Result<(), ImageError> {
+    render_image(bytes, width_chars).save_with_format(path, ImageFormat::Png)
+}
+
+/// Build the receipt image (shared by `render_png` / `render_png_to`).
+fn render_image(bytes: &[u8], width_chars: u32) -> RgbaImage {
     let scale: u32 = 3; // 8x8 glyph -> 24px, readable
     let cell = 8 * scale;
     let pad = cell;
@@ -136,7 +149,7 @@ pub fn render_png_to(bytes: &[u8], path: &Path, width_chars: u32) -> Result<(), 
         draw_text(&mut img, &line.text, x0, y, scale, line.bold);
         y += line_h;
     }
-    img.save_with_format(path, ImageFormat::Png)
+    img
 }
 
 fn draw_text(img: &mut RgbaImage, text: &str, x0: u32, y0: u32, scale: u32, bold: bool) {
