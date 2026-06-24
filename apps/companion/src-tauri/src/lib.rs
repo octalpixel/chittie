@@ -32,7 +32,7 @@ impl Default for Branding {
         Branding {
             name: "Chittie Companion".into(),
             tooltip: "Chittie Companion — printing on :8930".into(),
-            accent: "#3b34c4".into(),
+            accent: "#0a0a0a".into(),
             logo_path: String::new(),
         }
     }

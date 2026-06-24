@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chittie Companion</title>
     <style>
+      /* ElevenLabs-style: near-black as the only accent, white surfaces, light borders, minimal colour */
       :root {
-        --bg: #f7f7f6; --surface: #ffffff; --ink: #18181b; --muted: #6b7280;
-        --line: #e7e5e4; --accent: #3b34c4; --accent-ink: #ffffff;
-        --ok: #15803d; --warn: #b45309; --err: #b91c1c;
+        --bg: #ffffff; --surface: #fafafa; --ink: #09090b; --muted: #71717a;
+        --line: #e4e4e7; --accent: #0a0a0a; --accent-ink: #ffffff;
+        --ok: #16a34a; --warn: #d97706; --err: #dc2626;
       }
       * { box-sizing: border-box; }
       body {
@@ -31,8 +32,9 @@
         font: inherit; font-weight: 600; padding: .8rem 1.1rem; border-radius: 11px;
         border: 1px solid transparent; cursor: pointer; transition: transform .08s ease, background .15s; }
       .btn:active { transform: translateY(1px); }
-      .btn-primary { background: var(--accent); color: var(--accent-ink); width: 100%; font-size: 1rem; margin-top: 1rem; }
-      .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+      .btn-primary { background: var(--accent); color: var(--accent-ink); width: 100%; font-size: .95rem; margin-top: 1rem; letter-spacing: -0.01em; }
+      .btn-primary:hover:not(:disabled) { background: #27272a; }
+      .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
       .btn-ghost { background: transparent; border-color: var(--line); color: var(--ink); padding: .5rem .8rem; font-size: .85rem; }
 
       .section-label { font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
