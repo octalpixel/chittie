@@ -10,6 +10,13 @@ on:
     tags:
       - 'companion-v*'
   workflow_dispatch:
+    inputs:
+      brand_logo_url:
+        description: 'Optional: URL of a square PNG logo to white-label this build (regenerates icons).'
+        required: false
+      tauri_config:
+        description: 'Optional: per-brand config override, e.g. apps/companion/brands/acme.json'
+        required: false
 
 permissions:
   contents: write # tauri-action creates the GitHub Release
@@ -44,6 +51,13 @@ jobs:
         with:
           workspaces: './apps/companion/src-tauri -> target'
 
+      # White-label: regenerate the icon set from a brand logo before building.
+      - name: Brand icons
+        if: ${{ inputs.brand_logo_url != '' }}
+        run: |
+          curl -sL "${{ inputs.brand_logo_url }}" -o /tmp/brand-logo.png
+          npx -y @tauri-apps/cli@^2 icon /tmp/brand-logo.png --output apps/companion/src-tauri/icons
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -54,4 +68,4 @@ jobs:
           releaseBody: 'Print bridge + diagnostics. Installers for macOS / Windows / Linux below.'
           releaseDraft: true
           prerelease: false
-          args: ${{ matrix.args }}
+          args: ${{ matrix.args }} ${{ inputs.tauri_config != '' && format('--config {0}', inputs.tauri_config) || '' }}

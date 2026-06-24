@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Acme Print",
+  "identifier": "com.acme.print",
+  "bundle": {
+    "icon": [
+      "icons/acme/32x32.png",
+      "icons/acme/128x128.png",
+      "icons/acme/128x128@2x.png",
+      "icons/acme/icon.icns",
+      "icons/acme/icon.ico"
+    ]
+  }
+}

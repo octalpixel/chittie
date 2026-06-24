@@ -3,11 +3,54 @@
 //! the `print_escpos`/`list_printers` commands directly, and a background thread
 //! runs the HTTP server so an *external* web POS (Safari/iPad, another browser)
 //! can reach it on http://localhost:8930.
+//!
+//! White-labeling: the OS/installer icon is build-time (rebuild per brand with
+//! `tauri icon <logo> && tauri build --config brands/<brand>.json`). The tray icon,
+//! window title, and in-app UI are skinned at RUNTIME from a `branding.json`
+//! (path via `CHITTIE_BRANDING`, else next to the binary) — no rebuild needed.
 
 use std::thread;
 
 use chittie_agent::core::{self, Target};
 use chittie_agent::server::{run, ServeOptions};
+use tauri::Manager;
+
+/// Runtime branding — skins the tray/window/UI without a rebuild.
+#[derive(serde::Serialize, serde::Deserialize, Clone)]
+#[serde(default, rename_all = "camelCase")]
+struct Branding {
+    name: String,
+    tooltip: String,
+    /// Accent colour for the in-app UI (CSS).
+    accent: String,
+    /// Absolute path to a PNG logo for the tray + UI (optional; falls back to the bundled icon).
+    logo_path: String,
+}
+
+impl Default for Branding {
+    fn default() -> Self {
+        Branding {
+            name: "Chittie Companion".into(),
+            tooltip: "Chittie Companion — printing on :8930".into(),
+            accent: "#3b34c4".into(),
+            logo_path: String::new(),
+        }
+    }
+}
+
+fn load_branding() -> Branding {
+    let path = std::env::var("CHITTIE_BRANDING").unwrap_or_else(|_| "branding.json".into());
+    std::fs::read_to_string(&path)
+        .ok()
+        .and_then(|s| serde_json::from_str(&s).ok())
+        .unwrap_or_default()
+}
+
+/// The in-app UI reads this to brand itself (name, accent, logo data URL).
+#[tauri::command]
+fn branding() -> Branding {
+    load_branding()
+}
 
 /// Print raw ESC/POS or TSPL bytes to a target. Used by the in-app diagnostics UI
 /// and any vendor frontend running inside this window.
@@ -24,9 +67,6 @@ fn list_printers() -> Vec<serde_json::Value> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run_app() {
-    // Serve the HTTP API on a background thread so external browsers (a hosted web
-    // POS, an iPad on the LAN) can print through this companion. The window's own
-    // UI uses the Tauri commands above directly.
     thread::spawn(|| {
         let port = std::env::var("CHITTIE_PORT").ok().and_then(|s| s.parse().ok()).unwrap_or(8930);
         let token = std::env::var("CHITTIE_TOKEN").ok().filter(|s| !s.is_empty());
@@ -38,16 +78,19 @@ pub fn run_app() {
 
     tauri::Builder::default()
         .setup(|app| {
-            // System tray (icon present once `tauri icon` has generated it).
+            let brand = load_branding();
+
+            // Window title + tray tooltip from branding (runtime). The tray/installer
+            // ICON is build-time (bundled) — per-brand builds swap it via `tauri icon`.
+            if let Some(win) = app.get_webview_window("main") {
+                let _ = win.set_title(&brand.name);
+            }
             if let Some(icon) = app.default_window_icon().cloned() {
-                tauri::tray::TrayIconBuilder::new()
-                    .icon(icon)
-                    .tooltip("Chittie Companion — printing on :8930")
-                    .build(app)?;
+                tauri::tray::TrayIconBuilder::new().icon(icon).tooltip(&brand.tooltip).build(app)?;
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![print_escpos, list_printers])
+        .invoke_handler(tauri::generate_handler![print_escpos, list_printers, branding])
         .run(tauri::generate_context!())
         .expect("error while running Chittie Companion");
 }

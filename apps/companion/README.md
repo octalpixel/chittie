@@ -30,7 +30,29 @@ macOS / Windows / Linux via `tauri-action` (mirrors ordereka's proven Windows bu
 **Prerequisite:** `src-tauri/icons/*` must be committed (run `tauri icon` once).
 
 ## Env
-- `CHITTIE_PORT` (default 8930) · `CHITTIE_TOKEN` (x-agent-token) · `CHITTIE_VIRTUAL` (render PNGs, no printer).
+- `CHITTIE_PORT` (default 8930) · `CHITTIE_TOKEN` (x-agent-token) · `CHITTIE_VIRTUAL` (render PNGs, no printer) · `CHITTIE_BRANDING` (path to a branding.json).
+
+## White-labeling (two layers)
+The **OS/installer icon + app name** are build-time; the **tray icon, window title, and in-app UI**
+skin at runtime.
+
+**Runtime (no rebuild)** — point `CHITTIE_BRANDING` at a JSON (or drop `branding.json` next to the
+binary). It re-skins the tray tooltip + logo, window title, and the diagnostics UI (name, accent,
+logo). See `brands/acme.branding.json`:
+```bash
+CHITTIE_BRANDING=brands/acme.branding.json <chittie-companion>
+```
+
+**Per-brand build (own dock/installer icon + app name)** — generate the icon set from the brand's
+logo and build with a config override:
+```bash
+npx @tauri-apps/cli icon brand-logo.png --output src-tauri/icons/acme
+npx @tauri-apps/cli build --config brands/acme.json   # productName, identifier, bundle.icon
+```
+`brands/acme.json` overrides `productName` / `identifier` / `bundle.icon`; the runtime
+`brands/acme.branding.json` skins the live app. A CI matrix (one row per brand → its logo + config)
+produces a branded installer per partner. The default chittie icons live in `src-tauri/icons/`
+(generated from `branding/logo.png`).
 
 > Status: **scaffolded** — Rust commands + embedded server + tray + a minimal diagnostics
 > UI are in place and the core they call is unit-tested. The bundle/installer is produced by
