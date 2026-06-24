@@ -1,5 +1,12 @@
 # @angadie/chittie-label-react
 
+## 0.5.1
+
+### Patch Changes
+
+- Updated dependencies [4fc95fb]
+  - @angadie/chittie-label@0.6.0
+
 ## 0.5.0
 
 ### Minor Changes

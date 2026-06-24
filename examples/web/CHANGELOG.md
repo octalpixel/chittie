@@ -1,5 +1,13 @@
 # @angadie/example-web
 
+## 0.0.6
+
+### Patch Changes
+
+- Updated dependencies [4fc95fb]
+  - @angadie/chittie-transport-web@0.6.0
+  - @angadie/chittie@0.5.1
+
 ## 0.0.5
 
 ### Patch Changes
