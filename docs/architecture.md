@@ -97,7 +97,11 @@ A cafe routes one order to several printers: receipt → counter, food → kitch
 | JS SDK `@angadie/chittie-companion` (discover / print-to-station / result, no-pin hard-gate) | **shipped** (npm 0.6.0) |
 | Tauri companion app (embeds core + server + tray + diagnostics UI) | **scaffolded** (`apps/companion`; bundle via CI) |
 | CI: `companion-release.yml` (tauri-action matrix) + headless `print-agent-release.yml` | **shipped** (CI-built artifacts) |
-| Onboarding recipe + capability-detect (`createBestTransport`) | **building** |
+| `createBestTransport` (companion > web-serial > error, deterministic) | **shipped** (chittie-transport-web 0.6.0) |
+| dpi-aware raster sizing + `fontFamilies` (same physical size across 58/80mm & 203/300-DPI) | **shipped** (0.6.0) |
+| Rasterizer adapters: **canvas** (web/node) verified; **skia** (RN), **takumi-wasm** (edge), **server** (Expo Go) recipes | **shipped** (`examples/rasterizers`) |
+| On-device RN rasterization (Skia/captureRef `readPixels`) + real-printer verification | **device-gated** (hardware step) |
+| Onboarding recipe component | **building** |
 | Virtual printer port (CUPS backend / Windows RedMon) | **designed** (`tools/print-agent/VIRTUAL-PRINTER.md`) |
 | Printer status feedback (paper-out via `DLE EOT`) | **designed** (ROADMAP) |
 

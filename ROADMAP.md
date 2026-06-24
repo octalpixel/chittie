@@ -51,6 +51,7 @@ split-payment/refund receipts. chittie is no longer theoretical.
 - [ ] **Print status feedback** (#1 reliability) — see design.
 - [x] **`chittie-label`** + **`chittie-label-react`** — TSPL label/tag printing (builder `0.4.0`, JSX `0.5.0`). Next: label support in chittie-preview; verify on ordereka's label hardware.
 - [ ] **Logo raster caching** — ordereka solved app-side (`v1.0.6`); upstream a cache so every consumer benefits.
+- [x] **Cross-platform rasterizers** — one `TextRasterizer` interface, a backend per platform: canvas (web/node, verified), skia (RN), takumi-wasm (edge), server (Expo Go). dpi-aware sizing + `fontFamilies` + `createBestTransport` shipped (0.6.0). See `examples/rasterizers`. Remaining: on-device RN verify (Skia/captureRef `readPixels`) — hardware-gated.
 - [ ] **i18n breadth** — code pages already exist for Thai (`cp874`), Japanese (`shiftjis`), Arabic; add selection guidance + RTL/bidi handling for `<Row>`.
 - [ ] **print-agent threat model** — drawer-pop abuse / DoS over localhost; document + token-gate the drawer pulse.
 - [ ] **print-agent virtual printer port ("studio mode")** + embeddable-core split — register an OS print device (CUPS backend / Windows RedMon port) that feeds the agent; `POST /print-raw`; a vendoring guide so others lift it like ordereka did. Design: `tools/print-agent/VIRTUAL-PRINTER.md`.
