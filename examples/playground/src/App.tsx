@@ -6,6 +6,7 @@ import {
   Line,
   Cut,
   Cashdraw,
+  Image as RImage,
   render as renderReceiptTree,
   PRINTER_PROFILES,
   formatMoney,
@@ -57,6 +58,33 @@ const rasterizer: TextRasterizer = {
   },
 };
 
+// Load a logo (file or URL) → ImageData, scaled to a print-friendly width.
+function loadImageData(src: string, maxW: number): Promise<ImageData> {
+  return new Promise((resolve, reject) => {
+    const img = document.createElement('img');
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const scale = Math.min(1, maxW / img.naturalWidth);
+      const w = Math.max(1, Math.round(img.naturalWidth * scale));
+      const h = Math.max(1, Math.round(img.naturalHeight * scale));
+      const c = document.createElement('canvas');
+      c.width = w;
+      c.height = h;
+      const ctx = c.getContext('2d')!;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      try {
+        resolve(ctx.getImageData(0, 0, w, h));
+      } catch {
+        reject(new Error('Could not read that image — a URL must allow CORS; try uploading a file instead.'));
+      }
+    };
+    img.onerror = () => reject(new Error('Could not load that image.'));
+    img.src = src;
+  });
+}
+
 const targetOf = (p: PrinterInfo) => (p.transport === 'usb' ? 'usb' : p.systemName);
 
 async function printBytes(bytes: Uint8Array, target: string) {
@@ -67,7 +95,7 @@ async function printBytes(bytes: Uint8Array, target: string) {
 
 const I = { width: 140 } as const;
 
-function ReceiptTab({ target }: { target: string }) {
+function ReceiptTab({ target, logo }: { target: string; logo: ImageData | null }) {
   const [biz, setBiz] = useState('Artisan Haus');
   const [greeting, setGreeting] = useState('ආයුබෝවන්');
   const [profile, setProfile] = useState<'58mm' | '80mm'>('80mm');
@@ -81,6 +109,7 @@ function ReceiptTab({ target }: { target: string }) {
   const bytes = useMemo(() => {
     const tree = (
       <Printer width={columns}>
+        {logo ? <RImage image={logo} align="center" dither="atkinson" /> : null}
         <Text align="center" bold size={{ width: 2, height: 2 }}>{biz}</Text>
         {greeting ? <Text align="center">{greeting}</Text> : null}
         <Line />
@@ -99,7 +128,7 @@ function ReceiptTab({ target }: { target: string }) {
     } catch {
       return new Uint8Array();
     }
-  }, [biz, greeting, items, total, columns, dotWidth]);
+  }, [biz, greeting, items, total, columns, dotWidth, logo]);
 
   const png = useMemo(() => {
     if (!bytes.length) return '';
@@ -182,6 +211,14 @@ export default function App() {
   const [up, setUp] = useState<boolean | null>(null);
   const [printers, setPrinters] = useState<PrinterInfo[]>([]);
   const [target, setTarget] = useState('');
+  const [logo, setLogo] = useState<ImageData | null>(null);
+  const [logoErr, setLogoErr] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
+
+  const loadLogo = async (src: string) => {
+    try { setLogo(await loadImageData(src, 260)); setLogoErr(''); }
+    catch (e) { setLogoErr((e as Error).message); }
+  };
 
   useEffect(() => {
     (async () => {
@@ -221,11 +258,21 @@ export default function App() {
         {up && printers.length === 0 && <span style={{ color: '#888' }}>No printer detected — plug one in and reload.</span>}
       </div>
 
+      <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem', flexWrap: 'wrap', margin: '0 0 1.25rem', fontSize: 14 }}>
+        <span>Logo (receipt):</span>
+        <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) loadLogo(URL.createObjectURL(f)); }} />
+        <input placeholder="…or paste an image URL" value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} style={{ width: 220 }} />
+        <button onClick={() => logoUrl && loadLogo(logoUrl)}>Load</button>
+        {logo && <button onClick={() => { setLogo(null); setLogoUrl(''); }}>Clear</button>}
+        {logo && <span style={{ color: '#137333' }}>logo loaded ({logo.width}×{logo.height})</span>}
+        {logoErr && <span style={{ color: '#b91c1c' }}>{logoErr}</span>}
+      </div>
+
       <div style={{ marginBottom: '1.5rem', borderBottom: '1px solid #eee' }}>
         {tabBtn('receipt', 'Receipt')}
         {tabBtn('label', 'Label / Tag')}
       </div>
-      {tab === 'receipt' ? <ReceiptTab target={target} /> : <LabelTab target={target} />}
+      {tab === 'receipt' ? <ReceiptTab target={target} logo={logo} /> : <LabelTab target={target} />}
     </div>
   );
 }
