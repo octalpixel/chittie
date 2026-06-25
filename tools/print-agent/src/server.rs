@@ -4,6 +4,7 @@
 use std::io::{Cursor, Read};
 use std::net::Ipv4Addr;
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::Deserialize;
@@ -26,8 +27,9 @@ pub struct ServeOptions {
     pub virtual_mode: bool,
     pub out_dir: PathBuf,
     /// Declared paper width ("58mm" | "80mm"), surfaced on /health so the POS
-    /// builds the right column width instead of guessing.
-    pub paper: String,
+    /// builds the right column width instead of guessing. Shared (Arc<Mutex>) so the
+    /// companion can change it at runtime and /health reflects it immediately.
+    pub paper: Arc<Mutex<String>>,
 }
 
 impl Default for ServeOptions {
@@ -38,7 +40,7 @@ impl Default for ServeOptions {
             allow_origin: "*".into(),
             virtual_mode: false,
             out_dir: PathBuf::from("chittie-receipts"),
-            paper: "80mm".into(),
+            paper: Arc::new(Mutex::new("80mm".into())),
         }
     }
 }
@@ -90,7 +92,7 @@ fn route(request: &mut Request, cfg: &ServeOptions) -> Resp {
                 "version": VERSION,
                 "platform": std::env::consts::OS,
                 "mode": if cfg.virtual_mode { "virtual" } else { "print" },
-                "paper": cfg.paper,
+                "paper": cfg.paper.lock().map(|p| p.clone()).unwrap_or_else(|_| "80mm".into()),
             }),
             cfg,
         ),

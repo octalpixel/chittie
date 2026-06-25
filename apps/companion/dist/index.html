@@ -98,6 +98,13 @@
       <div id="picker" style="display:none; margin-top:.6rem; display:grid; gap:.5rem;"></div>
 
       <div class="toggle">
+        <div class="label">Paper width
+          <small>Match your printer so receipts fit (the POS reads this).</small>
+        </div>
+        <select id="paper"><option value="58mm">58 mm</option><option value="80mm">80 mm</option></select>
+      </div>
+
+      <div class="toggle">
         <div class="label">Start automatically
           <small>Open Chittie in the background when you turn on this computer.</small>
         </div>
@@ -226,6 +233,8 @@
       (async () => {
         try { $('autostart').checked = await invoke('autostart_enabled'); } catch {}
         $('autostart').onchange = async (e) => { try { await invoke('set_autostart', { enabled: e.target.checked }); } catch (err) { setMsg('Could not change startup setting: ' + err, 'err'); e.target.checked = !e.target.checked; } };
+        try { $('paper').value = await invoke('get_paper'); } catch {}
+        $('paper').onchange = async (e) => { try { await invoke('set_paper', { paper: e.target.value }); setMsg(`Paper set to ${e.target.value}.`, 'ok'); } catch (err) { setMsg('Could not set paper: ' + err, 'err'); } };
       })();
       applyBranding();
       loadPrinters();

@@ -14,7 +14,9 @@ fn main() {
         out_dir: std::env::var("PRINT_AGENT_OUTPUT_DIR")
             .map(PathBuf::from)
             .unwrap_or_else(|_| PathBuf::from("chittie-receipts")),
-        paper: std::env::var("PRINT_AGENT_PAPER").ok().filter(|s| !s.is_empty()).unwrap_or_else(|| "80mm".into()),
+        paper: std::sync::Arc::new(std::sync::Mutex::new(
+            std::env::var("PRINT_AGENT_PAPER").ok().filter(|s| !s.is_empty()).unwrap_or_else(|| "80mm".into()),
+        )),
     };
     if let Err(e) = run(opts) {
         eprintln!("[print-agent] fatal: {e}");

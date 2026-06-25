@@ -9,6 +9,7 @@
 //! window title, and in-app UI are skinned at RUNTIME from a `branding.json`
 //! (path via `CHITTIE_BRANDING`, else next to the binary) — no rebuild needed.
 
+use std::sync::{Arc, Mutex};
 use std::thread;
 
 use chittie_agent::core::{self, Target};
@@ -86,6 +87,43 @@ fn autostart_enabled(app: tauri::AppHandle) -> Result<bool, String> {
     app.autolaunch().is_enabled().map_err(|e| e.to_string())
 }
 
+/// Persisted paper-width setting (next to the binary), survives restarts.
+fn paper_file() -> Option<std::path::PathBuf> {
+    std::env::current_exe().ok().and_then(|p| p.parent().map(|d| d.join("chittie-paper.txt")))
+}
+
+/// Initial paper width: CHITTIE_PAPER env → saved file → "80mm".
+fn read_initial_paper() -> String {
+    std::env::var("CHITTIE_PAPER")
+        .ok()
+        .filter(|s| !s.is_empty())
+        .or_else(|| {
+            paper_file()
+                .and_then(|f| std::fs::read_to_string(f).ok())
+                .map(|s| s.trim().to_string())
+                .filter(|s| s == "58mm" || s == "80mm")
+        })
+        .unwrap_or_else(|| "80mm".into())
+}
+
+/// Store owner's paper width — updates /health immediately (shared state) and persists.
+#[tauri::command]
+fn set_paper(state: tauri::State<Arc<Mutex<String>>>, paper: String) -> Result<(), String> {
+    if paper != "58mm" && paper != "80mm" {
+        return Err("paper must be \"58mm\" or \"80mm\"".into());
+    }
+    *state.lock().map_err(|e| e.to_string())? = paper.clone();
+    if let Some(f) = paper_file() {
+        let _ = std::fs::write(f, &paper);
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn get_paper(state: tauri::State<Arc<Mutex<String>>>) -> String {
+    state.lock().map(|p| p.clone()).unwrap_or_else(|_| "80mm".into())
+}
+
 /// Show + focus the main window (from the tray icon / menu).
 fn show_main(app: &tauri::AppHandle) {
     if let Some(w) = app.get_webview_window("main") {
@@ -112,17 +150,20 @@ async fn check_update(app: tauri::AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run_app() {
-    thread::spawn(|| {
+    // Paper width shared with the server thread so set_paper updates /health live.
+    let paper = Arc::new(Mutex::new(read_initial_paper()));
+    let paper_for_server = paper.clone();
+    thread::spawn(move || {
         let port = std::env::var("CHITTIE_PORT").ok().and_then(|s| s.parse().ok()).unwrap_or(8930);
         let token = std::env::var("CHITTIE_TOKEN").ok().filter(|s| !s.is_empty());
         let virtual_mode = std::env::var("CHITTIE_VIRTUAL").is_ok();
-        let paper = std::env::var("CHITTIE_PAPER").ok().filter(|s| !s.is_empty()).unwrap_or_else(|| "80mm".into());
-        if let Err(e) = run(ServeOptions { port, token, virtual_mode, paper, ..Default::default() }) {
+        if let Err(e) = run(ServeOptions { port, token, virtual_mode, paper: paper_for_server, ..Default::default() }) {
             eprintln!("[companion] server stopped: {e}");
         }
     });
 
     tauri::Builder::default()
+        .manage(paper)
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
@@ -181,7 +222,7 @@ pub fn run_app() {
                 let _ = window.hide();
             }
         })
-        .invoke_handler(tauri::generate_handler![print_escpos, list_printers, branding, set_autostart, autostart_enabled])
+        .invoke_handler(tauri::generate_handler![print_escpos, list_printers, branding, set_autostart, autostart_enabled, set_paper, get_paper])
         .run(tauri::generate_context!())
         .expect("error while running Chittie Companion");
 }
