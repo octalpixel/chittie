@@ -1,0 +1,36 @@
+// Standard Nitro-module Android build. The nitrogen/ files (Kotlin specs + C++ glue
+// + the autolinking gradle) are produced by `nitro-codegen`; validated by the Android
+// device build. See https://nitro.margelo.com/docs/nitrogen
+buildscript {
+  repositories { google(); mavenCentral() }
+  dependencies {
+    classpath "com.android.tools.build:gradle:8.2.1"
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.24"
+  }
+}
+
+apply plugin: "com.android.library"
+apply plugin: "org.jetbrains.kotlin.android"
+
+android {
+  namespace "com.margelo.nitro.chittie"
+  compileSdk 34
+  defaultConfig {
+    minSdk 24
+    consumerProguardFiles "consumer-rules.pro"
+  }
+  buildFeatures { prefab true }
+  sourceSets {
+    main {
+      java.srcDirs += ["src/main/java", "nitrogen/generated/android/kotlin"]
+    }
+  }
+}
+
+// nitrogen emits this — wires the generated C++/JNI + the HybridObject registration.
+apply from: "../nitrogen/generated/android/ChittieReactNative+autolinking.gradle"
+
+dependencies {
+  implementation "com.facebook.react:react-android"
+  implementation project(":react-native-nitro-modules")
+}

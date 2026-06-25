@@ -1,0 +1,47 @@
+{
+  "name": "@angadie/chittie-react-native",
+  "version": "0.1.0",
+  "description": "React Native (Nitro) backend for chittie: native non-Latin text rasterization (CoreText / android.graphics) implementing chittie's TextRasterizer. Dev-client / bare RN — not Expo Go.",
+  "license": "MIT",
+  "type": "module",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "ios",
+    "android",
+    "nitro.json",
+    "*.podspec",
+    "app.plugin.js",
+    "README.md"
+  ],
+  "scripts": {
+    "nitrogen": "nitro-codegen",
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx spikes/adapter.spike.ts"
+  },
+  "peerDependencies": {
+    "@angadie/chittie-text": ">=0.8.0",
+    "react": "*",
+    "react-native": "*",
+    "react-native-nitro-modules": "*"
+  },
+  "devDependencies": {
+    "@angadie/chittie-text": "workspace:*",
+    "@canvas/image-data": "^1.1.0",
+    "react-native-nitro-modules": "*",
+    "tsdown": "^0.22.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

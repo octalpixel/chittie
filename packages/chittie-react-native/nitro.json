@@ -1,0 +1,23 @@
+{
+  "$schema": "https://nitro.margelo.com/nitro.schema.json",
+  "cxxNamespace": ["chittie"],
+  "ios": {
+    "iosModuleName": "ChittieReactNative"
+  },
+  "android": {
+    "androidNamespace": ["chittie"],
+    "androidCxxLibName": "ChittieReactNative"
+  },
+  "autolinking": {
+    "ChittieRasterizer": {
+      "ios": {
+        "language": "swift",
+        "implementationClassName": "HybridChittieRasterizer"
+      },
+      "android": {
+        "language": "kotlin",
+        "implementationClassName": "HybridChittieRasterizer"
+      }
+    }
+  }
+}
