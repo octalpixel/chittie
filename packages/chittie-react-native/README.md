@@ -12,12 +12,13 @@ rasterizes **non-Latin text** (Sinhala/Tamil/Arabic) natively (**CoreText** on i
 
 ```sh
 npm i @angadie/chittie-react-native @angadie/chittie react-native-nitro-modules
-npx nitro-codegen        # generates the native bindings from the .nitro.ts spec
 cd ios && pod install     # iOS
 # Android autolinks; rebuild the dev client.
 ```
 
-Requires React Native's **new architecture**.
+The Nitro bindings (`nitrogen/`) are **generated and shipped** — you only re-run `npm run codegen`
+if you change the `.nitro.ts` spec. Built with **react-native-builder-bob** (`lib/commonjs|module|
+typescript`). Requires React Native's **new architecture**.
 
 ## Use
 
@@ -57,12 +58,12 @@ Native:  ios/HybridChittieRasterizer.swift   (UIKit/CoreText)
 
 ## What's verified vs gated
 
-- **Verified (off-device):** the TS adapter — `makeRasterizer` produces a structural `ImageData`
-  that flows through chittie's `padTo8`/raster pipeline (see `spikes/adapter.spike.ts`), and the
-  package typechecks/builds.
-- **Gated (needs Xcode/Android Studio + a device):** `nitro-codegen`, the native Swift/Kotlin
-  compile, and an on-device snapshot of the rendered glyphs. The `.podspec` / `build.gradle` follow
-  the standard Nitro template and are validated by that device build.
+- **Verified (off-device):** `nitro-codegen` runs and the bindings are committed under `nitrogen/`;
+  the TS adapter spike (native bitmap → `ImageData` → chittie's `padTo8`, `spikes/adapter.spike.mts`);
+  `bob build` (commonjs/module/typescript) + typecheck in the monorepo gate.
+- **Gated (needs Xcode/Android Studio + a device):** the native **Swift/Kotlin compile** and an
+  on-device snapshot of the rendered glyphs. The iOS/Android build files mirror the proven
+  `react-native-nitro-haptics` template; the device build validates them.
 
 ## Roadmap (per the RFC)
 

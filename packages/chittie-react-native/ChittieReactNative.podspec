@@ -2,25 +2,31 @@ require "json"
 
 package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 
-# Standard Nitro-module podspec. The nitrogen/ files are produced by `nitro-codegen`;
-# validated by the iOS device build. See https://nitro.margelo.com/docs/nitrogen
 Pod::Spec.new do |s|
   s.name         = "ChittieReactNative"
   s.version      = package["version"]
   s.summary      = package["description"]
-  s.homepage     = "https://github.com/octalpixel/chittie"
+  s.homepage     = package["homepage"]
   s.license      = package["license"]
-  s.authors      = "angadie"
-  s.platforms    = { :ios => 13.4 }
+  s.authors      = package["author"]
+
+  s.platforms    = { :ios => min_ios_version_supported }
   s.source       = { :git => "https://github.com/octalpixel/chittie.git", :tag => "#{s.version}" }
 
   s.source_files = [
+    # Implementation (Swift)
     "ios/**/*.{swift}",
-    "nitrogen/generated/ios/**/*.{swift,hpp,cpp}",
+    # Autolinking / registration (Objective-C++)
+    "ios/**/*.{m,mm}",
+    # C++ objects (if any)
+    "cpp/**/*.{hpp,cpp}",
   ]
 
+  # nitrogen-generated autolinking (produced by `nitro-codegen`).
   load 'nitrogen/generated/ios/ChittieReactNative+autolinking.rb'
   add_nitrogen_files(s)
 
+  s.dependency 'React-jsi'
+  s.dependency 'React-callinvoker'
   install_modules_dependencies(s)
 end

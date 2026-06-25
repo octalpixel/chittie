@@ -3,30 +3,44 @@
   "version": "0.1.0",
   "description": "React Native (Nitro) backend for chittie: native non-Latin text rasterization (CoreText / android.graphics) implementing chittie's TextRasterizer. Dev-client / bare RN — not Expo Go.",
   "license": "MIT",
-  "type": "module",
-  "types": "./dist/index.d.mts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.mts",
-      "import": "./dist/index.mjs"
-    }
-  },
+  "author": "angadie",
+  "homepage": "https://github.com/octalpixel/chittie#readme",
+  "repository": "https://github.com/octalpixel/chittie.git",
+  "main": "./lib/commonjs/index.js",
+  "module": "./lib/module/index.js",
+  "types": "./lib/typescript/src/index.d.ts",
+  "react-native": "src/index",
+  "source": "src/index",
   "files": [
-    "dist",
     "src",
-    "ios",
-    "android",
+    "lib",
+    "nitrogen",
     "nitro.json",
-    "*.podspec",
+    "android/build.gradle",
+    "android/CMakeLists.txt",
+    "android/gradle.properties",
+    "android/fix-prefab.gradle",
+    "android/src",
+    "ios/**/*.swift",
     "app.plugin.js",
+    "*.podspec",
     "README.md"
   ],
   "scripts": {
-    "nitrogen": "nitro-codegen",
-    "build": "tsdown",
+    "codegen": "nitrogen --logLevel=\"debug\"",
+    "build": "tsc --noEmit && bob build",
     "typecheck": "tsc --noEmit",
-    "test": "tsx spikes/adapter.spike.ts"
+    "test": "tsx spikes/adapter.spike.mts",
+    "clean": "rm -rf lib"
   },
+  "keywords": [
+    "react-native",
+    "nitro",
+    "nitro-module",
+    "thermal-printer",
+    "escpos",
+    "chittie"
+  ],
   "peerDependencies": {
     "@angadie/chittie-text": ">=0.8.0",
     "react": "*",
@@ -36,12 +50,28 @@
   "devDependencies": {
     "@angadie/chittie-text": "workspace:*",
     "@canvas/image-data": "^1.1.0",
-    "react-native-nitro-modules": "*",
-    "tsdown": "^0.22.0",
+    "nitrogen": "0.35.1",
+    "react-native-builder-bob": "^0.40.18",
+    "react-native-nitro-modules": "0.35.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "react-native-builder-bob": {
+    "source": "src",
+    "output": "lib",
+    "targets": [
+      "commonjs",
+      "module",
+      [
+        "typescript",
+        {
+          "project": "tsconfig.json"
+        }
+      ]
+    ]
   }
 }
