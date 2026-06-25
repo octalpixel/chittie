@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import ReceiptPrinterEncoder from '@angadie/chittie-core';
 import ImageData from '@canvas/image-data';
-import { needsRaster, smartText, rasterizeRow, foldTypographic, sanitizeControl, formatMoney, dotsPerMm, type TextRasterizer } from '../src/index.js';
+import { needsRaster, smartText, rasterizeRow, cacheRasterizer, foldTypographic, sanitizeControl, formatMoney, dotsPerMm, type TextRasterizer } from '../src/index.js';
 
 function contains(u8: Uint8Array, seq: number[]): boolean {
   const a = Array.from(u8);
@@ -108,6 +108,22 @@ const ltrRow = rasterizeRow(solid, 'AB', 'CDDD', { dotWidth: 80 }); // left=8px,
 const rtlRow = rasterizeRow(solid, 'AB', 'CDDD', { dotWidth: 80, rtl: true });
 assert.equal(blackRunFromLeft(ltrRow), 8, 'LTR: label (left, 8px) sits at the left');
 assert.equal(blackRunFromLeft(rtlRow), 16, 'RTL: value (right, 16px) sits at the left');
+
+// cacheRasterizer: same (text, options) rasterized once; LRU evicts the oldest
+let calls = 0;
+const counting: TextRasterizer = {
+  rasterize(text) { calls++; return new ImageData(new Uint8ClampedArray(8 * 8 * 4).fill(255), 8, 8) as unknown as ImageData; },
+};
+const cached = cacheRasterizer(counting, 2);
+const a1 = cached.rasterize('Logo', { fontSize: 24 });
+const a2 = cached.rasterize('Logo', { fontSize: 24 });
+assert.equal(calls, 1, 'cache hit — inner rasterize called once');
+assert.equal(a1, a2, 'returns the same cached image');
+cached.rasterize('Logo', { fontSize: 30 }); // different options → miss
+assert.equal(calls, 2, 'different options → re-rasterized');
+cached.rasterize('Three'); // size now 3 > maxEntries 2 → evict oldest ('Logo'/24)
+cached.rasterize('Logo', { fontSize: 24 }); // evicted → recompute
+assert.equal(calls, 4, 'LRU evicts the oldest entry');
 
 // dotsPerMm: 203 → 8, 300 → ~12 (drives dpi-correct raster sizing)
 assert.ok(Math.abs(dotsPerMm(203) - 8) < 0.01, '203 DPI ≈ 8 dots/mm');

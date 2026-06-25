@@ -222,6 +222,35 @@ export function rasterizeRow(
   return padTo8(out);
 }
 
+/**
+ * Wrap a rasterizer so repeated `(text, options)` pairs are rasterized once and
+ * reused — the same header/greeting/labels print on every receipt, so this
+ * skips re-shaping them each time. Small LRU; pure (the inner rasterizer must
+ * return a stable image for the same inputs). For an image logo, load the
+ * ImageData once app-side — chittie doesn't own the image decode.
+ */
+export function cacheRasterizer(inner: TextRasterizer, maxEntries = 64): TextRasterizer {
+  const cache = new Map<string, ImageData>();
+  return {
+    rasterize(text, options) {
+      const key = `${text} ${JSON.stringify(options ?? {})}`;
+      const hit = cache.get(key);
+      if (hit) {
+        cache.delete(key);
+        cache.set(key, hit); // LRU touch
+        return hit;
+      }
+      const img = inner.rasterize(text, options);
+      cache.set(key, img);
+      if (cache.size > maxEntries) {
+        const oldest = cache.keys().next().value;
+        if (oldest !== undefined) cache.delete(oldest);
+      }
+      return img;
+    },
+  };
+}
+
 function blankImage(w: number, h: number): ImageData {
   // Fallback when there's nothing to render — needs a global ImageData.
   const Ctor = (globalThis as { ImageData?: new (d: Uint8ClampedArray, w: number, h: number) => ImageData }).ImageData;
