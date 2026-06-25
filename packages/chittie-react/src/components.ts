@@ -91,17 +91,19 @@ export const Text = printable<TextProps>((e, p, ctx) => {
 export interface RowProps {
   left?: ReactNode;
   right?: ReactNode;
+  /** Right-to-left reading order (Arabic/Hebrew): label reads flush-right, value flush-left. */
+  rtl?: boolean;
   children?: ReactNode;
 }
 export const Row = printable<RowProps>((e, p, ctx) => {
   const left = clean(toText(p.left));
   const right = clean(toText(p.right));
   // Non-Latin in a cell can't go through code-page text — raster the whole row
-  // (left flush-left, right flush-right) as one image; throw if no rasterizer.
+  // as one image; throw if no rasterizer. RTL mirrors the cell placement.
   if (needsRaster(left, ctx.codepage) || needsRaster(right, ctx.codepage)) {
     if (!ctx.rasterizer) {
       throw new Error(
-        'chittie: <Row> contains non-encodable text (e.g. Sinhala/Tamil). Pass a rasterizer to render(), or use code-page text.'
+        'chittie: <Row> contains non-encodable text (e.g. Sinhala/Tamil/Arabic). Pass a rasterizer to render(), or use code-page text.'
       );
     }
     const img = rasterizeRow(ctx.rasterizer, left, right, {
@@ -109,18 +111,22 @@ export const Row = printable<RowProps>((e, p, ctx) => {
       fontSize: rasterPx(ctx.dpi),
       dpi: ctx.dpi,
       fontFamilies: ctx.fontFamilies,
+      rtl: p.rtl,
     });
     e.image(img, img.width, img.height);
     return;
   }
-  const rightW = Math.min(right.length, ctx.columns);
-  const leftW = Math.max(0, ctx.columns - rightW);
+  // RTL: value (right) flush-left, label (left) flush-right.
+  const lead = p.rtl ? right : left;
+  const trail = p.rtl ? left : right;
+  const trailW = Math.min(trail.length, ctx.columns);
+  const leadW = Math.max(0, ctx.columns - trailW);
   e.table(
     [
-      { width: leftW, align: 'left' },
-      { width: rightW, align: 'right' },
+      { width: leadW, align: 'left' },
+      { width: trailW, align: 'right' },
     ],
-    [[left, right]]
+    [[lead, trail]]
   );
 });
 

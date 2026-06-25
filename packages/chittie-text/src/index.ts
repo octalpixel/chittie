@@ -201,9 +201,9 @@ export function rasterizeRow(
   rasterizer: TextRasterizer,
   left: string,
   right: string,
-  options: { dotWidth: number } & RasterOptions
+  options: { dotWidth: number; rtl?: boolean } & RasterOptions
 ): ImageData {
-  const { dotWidth, ...raster } = options;
+  const { dotWidth, rtl, ...raster } = options;
   const l = left ? rasterizer.rasterize(left, raster) : undefined;
   const r = right ? rasterizer.rasterize(right, raster) : undefined;
   const template = l ?? r;
@@ -211,8 +211,14 @@ export function rasterizeRow(
   const height = Math.max(l?.height ?? 0, r?.height ?? 0) || 1;
   const width = Math.max(dotWidth, (l?.width ?? 0) + (r?.width ?? 0));
   const out = blank(template, width, height);
-  if (l) blit(out, l, 0, 0);
-  if (r) blit(out, r, width - r.width, 0);
+  if (rtl) {
+    // RTL reading order: the label (left) reads flush-right, the value (right) flush-left.
+    if (l) blit(out, l, width - l.width, 0);
+    if (r) blit(out, r, 0, 0);
+  } else {
+    if (l) blit(out, l, 0, 0);
+    if (r) blit(out, r, width - r.width, 0);
+  }
   return padTo8(out);
 }
 

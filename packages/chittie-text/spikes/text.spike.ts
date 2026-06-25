@@ -89,6 +89,26 @@ try {
 assert.equal(smartText(new ReceiptPrinterEncoder({ columns: 32 }) as never, 'Hello', {}), false, 'code-page text → returns false');
 assert.equal(smartText(new ReceiptPrinterEncoder({ columns: 32 }) as never, 'ආයුබෝවන්', { rasterizer: fake }), true, 'rasterized → returns true');
 
+// RTL rows: Arabic needs raster, and rtl mirrors cell placement (value flush-left)
+assert.equal(needsRaster('مرحبا'), true, 'Arabic has no cp437 → rasters');
+const solid: TextRasterizer = {
+  rasterize(text) {
+    const w = Math.max(4, text.length * 4);
+    const data = new Uint8ClampedArray(w * 8 * 4).fill(0);
+    for (let i = 0; i < w * 8; i++) data[i * 4 + 3] = 255; // opaque black block
+    return new ImageData(data, w, 8) as unknown as ImageData;
+  },
+};
+const blackRunFromLeft = (img: ImageData) => {
+  let n = 0;
+  for (let x = 0; x < img.width; x++) { const i = x * 4; if (img.data[i]! < 128 && img.data[i + 3]! > 0) n++; else break; }
+  return n;
+};
+const ltrRow = rasterizeRow(solid, 'AB', 'CDDD', { dotWidth: 80 }); // left=8px, right=16px
+const rtlRow = rasterizeRow(solid, 'AB', 'CDDD', { dotWidth: 80, rtl: true });
+assert.equal(blackRunFromLeft(ltrRow), 8, 'LTR: label (left, 8px) sits at the left');
+assert.equal(blackRunFromLeft(rtlRow), 16, 'RTL: value (right, 16px) sits at the left');
+
 // dotsPerMm: 203 → 8, 300 → ~12 (drives dpi-correct raster sizing)
 assert.ok(Math.abs(dotsPerMm(203) - 8) < 0.01, '203 DPI ≈ 8 dots/mm');
 assert.ok(Math.abs(dotsPerMm(300) - 11.81) < 0.01, '300 DPI ≈ 11.8 dots/mm');
