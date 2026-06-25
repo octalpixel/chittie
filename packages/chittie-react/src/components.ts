@@ -55,16 +55,21 @@ export interface TextProps {
   underline?: boolean | number;
   invert?: boolean;
   size?: TextScale;
+  /** Use the printer's smaller built-in font (ESC/POS Font B, ~9×17 vs A 12×24) — fine print. */
+  small?: boolean;
   /** If true, don't append a newline after the text. */
   inline?: boolean;
   children?: ReactNode;
 }
+// Font B is ~0.72× Font A — used to scale the rasterized fallback for `small`.
+const FONT_B_SCALE = 0.72;
 export const Text = printable<TextProps>((e, p, ctx) => {
   if (p.align) e.align(p.align);
   if (p.bold) e.bold(true);
   if (p.underline) e.underline(p.underline);
   if (p.invert) e.invert(true);
   if (p.size) e.size(p.size.width, p.size.height);
+  if (p.small) e.font('B');
   // smartText prints code-page text, or rasterizes complex scripts when a
   // rasterizer is supplied — and throws (never silent "?") when it isn't.
   const rastered = smartText(e, toText(p.children), {
@@ -72,7 +77,8 @@ export const Text = printable<TextProps>((e, p, ctx) => {
     codepage: ctx.codepage,
     raster: {
       bold: p.bold,
-      fontSize: rasterPx(ctx.dpi, p.size?.height ?? 1),
+      // Font B has no code page for non-Latin, so shrink the raster to match.
+      fontSize: rasterPx(ctx.dpi, (p.size?.height ?? 1) * (p.small ? FONT_B_SCALE : 1)),
       maxWidth: ctx.dotWidth,
       dpi: ctx.dpi,
       fontFamilies: ctx.fontFamilies,
@@ -81,6 +87,7 @@ export const Text = printable<TextProps>((e, p, ctx) => {
   // A rasterized line already advanced the paper by the image height — adding a
   // newline too would double-space it. Only feed for code-page text.
   if (!p.inline && !rastered) e.newline();
+  if (p.small) e.font('A');
   if (p.size) e.size(1, 1);
   if (p.invert) e.invert(false);
   if (p.underline) e.underline(false);

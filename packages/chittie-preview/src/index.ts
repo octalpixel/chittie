@@ -44,8 +44,11 @@ const CP437_HIGH =
   'ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜ¢£¥₧ƒáíóúñÑªº¿⌐¬½¼¡«»░▒▓│┤╡╢╖╕╣║╗╝╜╛┐└┴┬├─┼╞╟╚╔╩╦╠═╬╧╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀αßΓπΣσµτΦΘΩδ∞φε∩≡±≥≤⌠⌡÷≈°∙·√ⁿ²■ ';
 const decode = (b: number): string => (b < 0x80 ? String.fromCharCode(b) : (CP437_HIGH[b - 0x80] ?? ''));
 
+// ESC/POS Font B is ~9×17 vs Font A 12×24 — roughly 0.72× on screen.
+const FONT_B_SCALE = 0.72;
+
 type Op =
-  | { k: 'ch'; x: number; y: number; c: string; bold: boolean; scale: number }
+  | { k: 'ch'; x: number; y: number; c: string; bold: boolean; scale: number; fontB: boolean }
   | { k: 'img'; blacks: Array<[number, number]> }
   | { k: 'cut'; y: number }
   | { k: 'box'; x: number; y: number; w: number; h: number; label: string };
@@ -67,6 +70,7 @@ function parse(bytes: Uint8Array, cfg: Cfg): { ops: Op[]; height: number } {
   let wScale = 1;
   let hScale = 1;
   let lineMaxScale = 1;
+  let fontB = false;
   let align: 'left' | 'center' | 'right' = 'left';
   let suppressNextLF = false;
   let i = 0;
@@ -105,7 +109,8 @@ function parse(bytes: Uint8Array, cfg: Cfg): { ops: Op[]; height: number } {
         suppressNextLF = true; // the band's trailing LF must not double-advance
         i = start + bpc * cols;
       } else if (c === 0x33) i += 3; // ESC 3 n
-      else if (c === 0x74 || c === 0x4d || c === 0x52 || c === 0x20 || c === 0x2d || c === 0x7b || c === 0x47) i += 3; // 1-param
+      else if (c === 0x4d) { fontB = bytes[i + 2] === 1; i += 3; } // ESC M n — font (0=A, 1=B)
+      else if (c === 0x74 || c === 0x52 || c === 0x20 || c === 0x2d || c === 0x7b || c === 0x47) i += 3; // 1-param
       else i += 2; // unknown ESC
     } else if (b === 0x1d) {
       const c = bytes[i + 1];
@@ -153,9 +158,9 @@ function parse(bytes: Uint8Array, cfg: Cfg): { ops: Op[]; height: number } {
       i += 1;
     } else {
       const ch = decode(b);
-      if (ch && ch !== ' ') ops.push({ k: 'ch', x, y, c: ch, bold, scale: hScale });
+      if (ch && ch !== ' ') ops.push({ k: 'ch', x, y, c: ch, bold, scale: hScale, fontB });
       if (hScale > lineMaxScale) lineMaxScale = hScale;
-      x += cfg.cellWidth * wScale;
+      x += cfg.cellWidth * wScale * (fontB ? FONT_B_SCALE : 1);
       i += 1;
     }
   }
@@ -184,7 +189,7 @@ export function renderReceipt(bytes: Uint8Array, options: PreviewOptions): Previ
   for (const op of ops) {
     if (op.k === 'ch') {
       ctx.fillStyle = '#000';
-      ctx.font = `${op.bold ? 'bold ' : ''}${18 * op.scale}px ${fontFamily}`;
+      ctx.font = `${op.bold ? 'bold ' : ''}${(op.fontB ? 18 * FONT_B_SCALE : 18) * op.scale}px ${fontFamily}`;
       ctx.fillText(op.c, cfg.padding + op.x, op.y);
     } else if (op.k === 'img') {
       ctx.fillStyle = '#000';

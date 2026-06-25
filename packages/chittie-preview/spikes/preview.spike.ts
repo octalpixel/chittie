@@ -31,11 +31,12 @@ enc.newline().align('left').rule();
 enc.table([{ width: 22, align: 'left' }, { width: 10, align: 'right' }], [['Coffee', 'Rs. 850']]);
 enc.barcode('012345678905', 'ean13', 60);
 enc.rule().bold(true).table([{ width: 22, align: 'left' }, { width: 10, align: 'right' }], [['TOTAL', 'Rs. 850']]).bold(false);
-enc.newline().align('center').line('Thank you!').cut();
+enc.newline().align('center').line('Thank you!').font('B').line('Powered by chittie').font('A').cut();
 const bytes = enc.encode();
 
 // mock canvas that records what was drawn
 const texts: string[] = [];
+const fonts: string[] = [];
 let rects = 0;
 let strokes = 0;
 const ctx: PreviewContext2D = {
@@ -45,7 +46,7 @@ const ctx: PreviewContext2D = {
   textBaseline: '',
   fillRect: () => { rects++; },
   strokeRect: () => { strokes++; },
-  fillText: (t) => { texts.push(t); },
+  fillText: (t) => { texts.push(t); fonts.push(ctx.font); },
   setLineDash: () => {},
   beginPath: () => {},
   moveTo: () => {},
@@ -63,6 +64,10 @@ assert.ok(joined.includes('Thank') && joined.includes('you'), 'footer');
 assert.ok(texts.includes('barcode'), 'barcode placeholder box labelled');
 assert.ok(rects > 50, `image pixels drawn (got ${rects})`);
 assert.ok(strokes >= 1, 'barcode box stroked');
+// Font B (<Text small> → ESC M 1) renders smaller than Font A's 18px in the preview
+const pxOf = (f: string) => { const m = f.match(/(\d+(?:\.\d+)?)px/); return m ? parseFloat(m[1]!) : 0; };
+assert.ok(fonts.some((f) => { const p = pxOf(f); return p > 0 && p < 18; }), 'Font B renders smaller than 18px');
+assert.ok(fonts.some((f) => pxOf(f) === 18), 'Font A renders at 18px (preview matches print)');
 
 console.log('✓ chittie-preview spike — column-image + barcode + text rendered, no desync');
 console.log(`  ${bytes.length} ESC/POS bytes → ${texts.length} glyphs, ${rects} image px, canvas ${canvas.width}x${canvas.height}`);
