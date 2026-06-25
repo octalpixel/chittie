@@ -142,6 +142,21 @@ export const Br = printable<BrProps>((e, p) => {
   e.newline(p.lines ?? 1);
 });
 
+export interface FeedProps {
+  /** Precise vertical space in dots (1 dot ≈ 0.125mm at 203 DPI). Finer than <Br> lines. */
+  dots: number;
+  children?: ReactNode;
+}
+/**
+ * Feed an exact number of dots (ESC J) — for tuning spacing below a full line.
+ * One-shot: it does NOT change global line spacing, so it can't conflict with
+ * the image feed. Use <Br lines> for line-level gaps, <Feed dots> for fine ones.
+ */
+export const Feed = printable<FeedProps>((e, p) => {
+  const n = Math.max(0, Math.min(255, Math.round(p.dots)));
+  e.raw([0x1b, 0x4a, n]); // ESC J n
+});
+
 export interface CutProps {
   partial?: boolean;
   children?: ReactNode;

@@ -9,6 +9,7 @@ import {
   Row,
   Line,
   Br,
+  Feed,
   Cut,
   Cashdraw,
   Barcode,
@@ -42,6 +43,7 @@ const receipt = (
     <Line />
     <Row left="TOTAL" right="Rs. 2350" />
     <Br />
+    <Feed dots={24} />
     <Barcode value="0123456789" symbology="code128" height={50} />
     <QRCode value="https://artisan.lk" size={6} />
     <Text align="center">THANK YOU</Text>
@@ -66,6 +68,7 @@ assert.ok(bytes instanceof Uint8Array && bytes.length > 0, 'non-empty bytes');
 assert.ok(contains(bytes, [0x1b, 0x40]), 'ESC @ initialize');
 assert.ok(contains(bytes, [0x1b, 0x70]), 'ESC p cash-drawer pulse');
 assert.ok(contains(bytes, [0x1d, 0x56]), 'GS V cut');
+assert.ok(contains(bytes, [0x1b, 0x4a, 24]), 'ESC J 24 — <Feed dots={24}>');
 assert.ok(ascii(bytes).includes('Artisan Haus'), 'business name');
 assert.ok(ascii(bytes).includes('TOTAL'), 'total row');
 assert.equal(typeof document, 'undefined', 'no DOM');
