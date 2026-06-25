@@ -1,0 +1,33 @@
+#!/bin/sh
+# chittie CUPS backend — forwards a raw print job to the local print-agent, so any
+# app can "Print -> Chittie" and the bytes land in the agent (studio PNG / forward).
+#
+# CUPS invokes a backend two ways:
+#   no args              -> print a device-discovery line, exit
+#   job user title n opt [file]  -> the job is in `file` ($6) or on stdin
+#
+# Config (env, set in the CUPS environment or the queue's options):
+#   CHITTIE_AGENT_URL  default http://127.0.0.1:8930
+#   CHITTIE_TOKEN      optional; sent as x-agent-token (matches the agent's token)
+set -eu
+
+AGENT_URL="${CHITTIE_AGENT_URL:-http://127.0.0.1:8930}"
+
+if [ "$#" -eq 0 ]; then
+  echo 'direct chittie "Unknown" "Chittie virtual printer (localhost:8930)"'
+  exit 0
+fi
+
+# Job bytes: the spooled file ($6) when present, else stdin.
+SRC="/dev/stdin"
+if [ "$#" -ge 6 ] && [ -n "${6:-}" ]; then SRC="$6"; fi
+
+# CUPS backend exit codes: 0 = ok, 1 = CUPS_BACKEND_FAILED.
+if [ -n "${CHITTIE_TOKEN:-}" ]; then
+  curl -fsS -X POST "$AGENT_URL/print-raw" --data-binary "@$SRC" \
+    -H 'content-type: application/octet-stream' -H "x-agent-token: $CHITTIE_TOKEN" >/dev/null || exit 1
+else
+  curl -fsS -X POST "$AGENT_URL/print-raw" --data-binary "@$SRC" \
+    -H 'content-type: application/octet-stream' >/dev/null || exit 1
+fi
+exit 0

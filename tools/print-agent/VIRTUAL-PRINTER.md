@@ -100,8 +100,11 @@ Then embedders take `core` only:
 ---
 
 ## Status / next
-- **Now:** design above is grounded (CUPS backend + RedMon are the standard mechanisms; verified
-  against CUPS backend docs + RedMon). The CUPS backend script is copy-ready.
-- **Build next (needs the OS print stack + a device to verify, so not marked done):**
-  `POST /print-raw`; the `core`/`bin` split; an installer that runs `lpadmin`/RedMon; the studio
-  live view. Verify on a real machine before claiming done.
+- **Shipped:** `POST /print-raw` (the sink), the `core`/`bin` split (`core.rs` + `server.rs` +
+  thin `main.rs`), and the **studio scripts** in `studio/`:
+  - `studio/chittie-backend` — the CUPS backend (forwards a raw job to the agent), syntax-checked.
+  - `studio/install-macos-linux.sh` — installs the backend + `lpadmin -m raw` (plus `uninstall`).
+  - `studio/install-windows.md` — the RedMon redirected-port recipe.
+- **Gated (needs the OS print stack + sudo + a device — not auto-verified):** running the installer
+  (`lpadmin`/RedMon) and printing through the registered "Chittie" queue end-to-end; the optional
+  studio live-view UI. Run `studio/install-macos-linux.sh` on a real machine to verify.
