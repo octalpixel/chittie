@@ -1,5 +1,9 @@
 # chittie
 
+[![npm](https://img.shields.io/npm/v/@angadie/chittie?label=%40angadie%2Fchittie)](https://www.npmjs.com/package/@angadie/chittie)
+[![ci](https://github.com/octalpixel/chittie/actions/workflows/ci.yml/badge.svg)](https://github.com/octalpixel/chittie/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/@angadie/chittie)](./LICENSE)
+
 > *chittu* (சீட்டு) — a slip / receipt. The receipt & printing engine for the **angadie** OSS POS system.
 
 Write a receipt once — as **JSX** or with the **builder** — and print it from **web**, **React Native / Expo**, and **Node**. Library-agnostic transports, Buffer-free core, no `react-dom`, and automatic rasterization for non-Latin scripts (Sinhala/Tamil/…).
