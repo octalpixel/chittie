@@ -22,6 +22,10 @@ Write a receipt once — as **JSX** or with the **builder** — and print it fro
 | `@angadie/chittie-transport-web` | Web Serial / WebUSB / Web Bluetooth. |
 | `@angadie/chittie-transport-react-native` | Library-agnostic RN/Expo adapter (bring any BLE/Classic/TCP lib) + encoding helpers. |
 | `@angadie/chittie-transport-node` | Network (LAN) transport — raw TCP to `:9100` for Node / Electron / print-servers. |
+| `@angadie/chittie-label` | **TSPL labels / price tags** — barcodes (EAN-13/Code128), QR, text, box, raster + non-Latin. |
+| `@angadie/chittie-label-react` | Pure JSX for labels — positioned `<LText>/<LBarcode>/<LQR>/<LBox>/<LImage>` on a `<Label>`. |
+| `@angadie/chittie-companion` | **Client SDK** for the Chittie Companion print bridge — discover → print-to-pinned-station → result. |
+| `@angadie/chittie-react-native` | **React Native (Nitro)** backend — native non-Latin rasterizer (CoreText / android.graphics). |
 
 ## Tools
 
@@ -61,11 +65,15 @@ Each is detailed in the linked package; this is the index.
 **Vendoring & project status**
 - Vendored `core`/`codepage` are **detached snapshots** at recorded SHAs (not `git subtree`); re-sync is manual. → [`VENDOR.md`](./VENDOR.md)
 - **Not yet published** to npm (`0.0.0`) — no `0.1.0` changeset staged yet. CI workflows are in place (print-agent cross-build is pushed).
-- **Not yet verified on physical hardware / a real browser** — spikes + the preview prove the bytes in software; on-device printing (XP-365B, live Web Serial/BLE, the Windows agent) is unconfirmed. **This is the main open gap.**
-- Only the **macOS arm64** print-agent binary is committed; Windows/Linux/Intel come from the release CI (untagged so far). Signed installers need code-signing certs (paid).
+- **Hardware-verified ✅** — chittie prints real receipts, including a **Sinhala** line, on a real **58mm ET PR-10** over direct USB, end-to-end (web POS → Chittie Companion SDK → printer). ordereka also runs it on an Xprinter.
+- **Companion installers** (Windows/macOS/Linux) build from the release CI (tagged `companion-v*`); a Windows `.exe` is published on R2. Still **unsigned** — code-signing certs (paid) are the remaining production step.
 
 ## Status
-v0.2 (unreleased) — 10 packages, `pnpm check` green (typecheck + build + spike per package). Spike-driven: JSX→real ESC/POS bytes, RN-safe, library-agnostic transports, Sinhala/Tamil raster, byte→image preview, web/RN/Node + network transports. Decisions in `chittie-build-implementation-notes.md` and `chittie-refactor-implementation-notes.md`.
+**Published on npm** — 14 packages, `pnpm check` green on every PR (CI). Receipts (ESC/POS) + labels
+(TSPL), Sinhala/Tamil/Arabic auto-raster, byte→image preview, web/RN/Node + network transports, a
+client SDK + a desktop **Companion** print bridge, and a React Native (Nitro) native rasterizer.
+**Hardware-verified on a 58mm printer.** Spacing controls: `<Br>` / `<Feed dots>` / `<Text small>`
+(Font B). Roadmap + remaining work: [`ROADMAP.md`](./ROADMAP.md), [`docs/PRODUCTION-PUNCHLIST.md`](./docs/PRODUCTION-PUNCHLIST.md).
 
 ## License
 MIT. Vendored code retains its original MIT notices — see [`VENDOR.md`](./VENDOR.md).

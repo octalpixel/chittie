@@ -46,9 +46,12 @@ feedback** and **label (TSPL) verification**.
   `<Text>` skips the redundant feed). Found on real 58mm hardware.
 - **`@angadie/chittie-companion` SDK** — discover → print-to-pinned-station → result; never a silent
   fallback. Full integration manual (`packages/chittie-companion/MANUAL.md`).
-- **Chittie Companion (Tauri app)** — the print bridge + diagnostics, store-owner-first UI
-  (status / pin printer / auto-detect / virtual-mode toggle), **autostart + close-to-tray** (one-time
-  setup), runtime branding. **CI builds installers for Windows + macOS** (unsigned; Linux WIP).
+- **Chittie Companion (Tauri app, v0.1.3)** — the print bridge + diagnostics, store-owner-first UI
+  (status / pin printer / auto-detect / virtual-mode / **paper 58-80mm** picker), **silent-tray
+  autostart + close-to-tray** (true one-time setup), no Windows console, **auto-updater**, runtime
+  branding. **CI builds Windows + macOS + Linux installers**; Windows `.exe` on R2. Unsigned (paid certs pending).
+- **Spacing + fine print** — `<Feed dots>` (ESC J), `<Text small>` (Font B, also in `chittie-preview`),
+  `<Row rtl>` for Arabic/Hebrew.
 - **Web playground** — author → live preview → print via the companion SDK; deployed to Cloudflare
   Pages (`chittie-playground.pages.dev`) for shareable UI/preview.
 - **PNA header** on the agent — hosted HTTPS POS can reach localhost on Chrome/Edge.
@@ -68,7 +71,7 @@ feedback** and **label (TSPL) verification**.
   `rustls`, so **Safari/iPad** and all browsers work. Decision record: `docs/localhost-tls.md`.
 
 ### Distribution
-- [ ] **Fix the Linux companion build** (Windows + macOS green; Linux job failed).
+- [x] **Linux companion build** — fixed (`libcups2-dev`); `.deb`/`.rpm`/`.AppImage` now build in CI.
 - [x] **Auto-updater** — `tauri-plugin-updater` + signed artifacts + tray "Check for updates"
   (wired; CI signs via `TAURI_SIGNING_PRIVATE_KEY`; verifies once a release is published).
 - [ ] **Code signing / notarization** (optional; removes SmartScreen/Gatekeeper warnings for
@@ -93,7 +96,7 @@ feedback** and **label (TSPL) verification**.
 - [ ] **First posts** — (1) "Printing Sinhala/Tamil when no code page exists"; (2) "Why we did *not*
   build a Nitro module"; (3) "Running an RN library under real Hermes in CI"; (4) "Finding a print bug
   only real hardware shows" (the 58mm double-feed).
-- [ ] **Discoverability** — `ci.yml` (`pnpm check` on PRs) + README badges + reactnative.directory listing.
+- [x] **Discoverability** — `ci.yml` (`pnpm check` on PRs) ✓ + README badges ✓. Remaining: reactnative.directory listing.
 
 ---
 

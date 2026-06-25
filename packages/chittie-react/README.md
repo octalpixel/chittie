@@ -33,15 +33,20 @@ const bytes = render(
 | Component | Props | Emits |
 |---|---|---|
 | `<Printer>` | `width` (columns, default 48) | the root; sets line width |
-| `<Text>` | `align`, `bold`, `underline`, `invert`, `size` ({width,height} multipliers), `inline` | text (or image — see below) + newline |
-| `<Row>` | `left`, `right` | a two-column justified row |
+| `<Text>` | `align`, `bold`, `underline`, `invert`, `size` ({width,height} multipliers), `small`, `inline` | text (or image — see below) + newline |
+| `<Row>` | `left`, `right`, `rtl` | a two-column justified row (`rtl`: label flush-right, value flush-left) |
 | `<Line>` | — | a horizontal rule |
 | `<Br>` | `lines` | blank line(s) |
+| `<Feed>` | `dots` | precise vertical space (ESC J) — finer than `<Br>` |
 | `<Cut>` | `partial` | paper cut |
 | `<Cashdraw>` | `device` | cash-drawer kick pulse |
 | `<Barcode>` | `value`, `symbology`, `height` | a barcode |
 | `<QRCode>` | `value`, `size`, `model` | a QR code |
 | `<Image>` | `image` (ImageData), `align`, `dither`, `threshold`, `width`, `height` | a raster image (logo, etc.) |
+
+**Spacing & fine print:** `<Br lines>` adds blank lines; `<Feed dots>` adds dot-precise space (ESC J);
+`<Text small>` prints in the smaller **Font B** (~9×17 vs A 12×24) for footers / "Powered by…" lines —
+and `chittie-preview` renders it smaller too. For RTL rows (Arabic/Hebrew) pass `<Row rtl>`.
 
 ### `<Image>` — logos and bitmaps
 
