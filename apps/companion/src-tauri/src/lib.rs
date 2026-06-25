@@ -94,6 +94,22 @@ fn show_main(app: &tauri::AppHandle) {
     }
 }
 
+/// Check for an update and install it if one is available (tray "Check for updates").
+/// No-op when no signed update is published. Restarts the app after installing.
+async fn check_update(app: tauri::AppHandle) {
+    use tauri_plugin_updater::UpdaterExt;
+    let Ok(updater) = app.updater() else { return };
+    match updater.check().await {
+        Ok(Some(update)) => {
+            if update.download_and_install(|_, _| {}, || {}).await.is_ok() {
+                app.restart();
+            }
+        }
+        Ok(None) => eprintln!("[companion] already up to date"),
+        Err(e) => eprintln!("[companion] update check failed: {e}"),
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run_app() {
     thread::spawn(|| {
@@ -111,6 +127,7 @@ pub fn run_app() {
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
         ))
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             let brand = load_branding();
 
@@ -124,8 +141,9 @@ pub fn run_app() {
             // Closing the window only hides it (see on_window_event) so the print server
             // keeps running in the background — the store owner sets it up once.
             let open_i = tauri::menu::MenuItem::with_id(app, "open", "Open Chittie", true, None::<&str>)?;
+            let update_i = tauri::menu::MenuItem::with_id(app, "update", "Check for updates", true, None::<&str>)?;
             let quit_i = tauri::menu::MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let menu = tauri::menu::Menu::with_items(app, &[&open_i, &quit_i])?;
+            let menu = tauri::menu::Menu::with_items(app, &[&open_i, &update_i, &quit_i])?;
             if let Some(icon) = app.default_window_icon().cloned() {
                 tauri::tray::TrayIconBuilder::new()
                     .icon(icon)
@@ -134,6 +152,10 @@ pub fn run_app() {
                     .show_menu_on_left_click(false)
                     .on_menu_event(|app, event| match event.id.as_ref() {
                         "open" => show_main(app),
+                        "update" => {
+                            let app = app.clone();
+                            tauri::async_runtime::spawn(check_update(app));
+                        }
                         "quit" => app.exit(0),
                         _ => {}
                     })

@@ -4,3 +4,4 @@ src-tauri/gen/
 icons/acme/
 !dist/
 !dist/**
+.tauri/

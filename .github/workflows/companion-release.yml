@@ -70,6 +70,10 @@ jobs:
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Signs the updater artifacts (createUpdaterArtifacts) → *.sig + latest.json.
+          # Add the private key (apps/companion/.tauri/updater.key) as this repo secret.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         with:
           projectPath: apps/companion
           tagName: ${{ github.ref_name }}
