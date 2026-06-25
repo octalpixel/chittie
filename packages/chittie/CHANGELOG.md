@@ -1,5 +1,12 @@
 # @angadie/chittie
 
+## 0.5.4
+
+### Patch Changes
+
+- Updated dependencies [14c7870]
+  - @angadie/chittie-react@0.9.0
+
 ## 0.5.3
 
 ### Patch Changes
