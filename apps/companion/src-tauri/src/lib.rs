@@ -166,7 +166,9 @@ pub fn run_app() {
         .manage(paper)
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
-            None,
+            // On login the OS launches us with this flag → we stay hidden in the tray
+            // (silent one-time setup); a manual launch shows the window.
+            Some(vec!["--minimized".into()]),
         ))
         .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
@@ -176,6 +178,12 @@ pub fn run_app() {
             // ICON is build-time (bundled) — per-brand builds swap it via `tauri icon`.
             if let Some(win) = app.get_webview_window("main") {
                 let _ = win.set_title(&brand.name);
+                // Launched at login (--minimized) → stay hidden in the tray. Manual
+                // launch → show. The window starts hidden (visible:false in the config).
+                if !std::env::args().any(|a| a == "--minimized") {
+                    let _ = win.show();
+                    let _ = win.set_focus();
+                }
             }
 
             // Tray menu: left-click (or "Open") shows the window; "Quit" actually exits.
