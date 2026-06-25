@@ -2,15 +2,14 @@
 
 ## What chittie is
 
-**Universal thermal receipt printing for scripts that have no code page.** Author a
-receipt once (JSX or builder) → ESC/POS bytes → print from web, React Native, or a
-desktop (Tauri) — and print **Sinhala, Tamil, and other complex scripts** that every
-other ESC/POS library renders as `?`.
+**Universal thermal printing for scripts that have no code page.** Author a receipt or label
+once (JSX or builder) → ESC/POS or TSPL bytes → print from web, React Native, or a desktop
+(Tauri) — and print **Sinhala, Tamil, and other complex scripts** that every other ESC/POS
+library renders as `?`.
 
-The defensible niche is **non-Latin + universal**, not generic ESC/POS. Generic receipt
-encoding is a commodity (`node-thermal-printer`, `react-thermal-printer`, …). chittie's
-research found *near-zero* ESC/POS Sinhala/Tamil prior art — that's the headline, and the
-roadmap leans into it. We do not compete on generic receipt features.
+The defensible niche is **non-Latin + universal**, not generic ESC/POS. Generic receipt encoding
+is a commodity. chittie's research found *near-zero* ESC/POS Sinhala/Tamil prior art — that's the
+headline, and the roadmap leans into it. We do not compete on generic receipt features.
 
 ## How we build: OSS + dogfood + stories (the Margelo model)
 
@@ -18,73 +17,112 @@ roadmap leans into it. We do not compete on generic receipt features.
 2. **Dogfood** — proven through real product work (ordereka-fashion-pos, shopbook-pos).
 3. **Stories** — every dogfood-surfaced gap becomes a fix *and* a technical post.
 
-The flywheel is already turning: the ordereka migration surfaced `×`-on-cp437 → we shipped
-`0.2.0` (typographic folding); their `toLocaleString` money is Intl-fragile on Hermes → we
-shipped `0.3.0` (`formatMoney`, no Intl). **Each fix should ship with a changeset and a post.**
+The flywheel keeps turning: `×`-on-cp437 → `0.2.0` folding; Intl-fragile money → `0.3.0`
+`formatMoney`; and most recently a real 58mm print exposed double-spaced non-Latin lines →
+`chittie-text/react 0.7.0`. **Each fix ships with a changeset; the post is the missing half.**
 
-## Proof: hardware-verified ✅ (the standing #1 gap, now closed)
+## Proof: hardware-verified ✅
 
-`ordereka-fashion-pos` shipped to **v1.0.11** on `@angadie/chittie`, lifting chittie's
-`tools/print-agent/src/usb.rs` into an in-process `print_escpos` Tauri command
-(winspool/CUPS queue + direct USB via `nusb` + raw TCP). It **prints on a real Xprinter**,
-auto-prints on sale, kicks the cash drawer, prints a dithered logo, and handles
-split-payment/refund receipts. chittie is no longer theoretical.
+- **ordereka-fashion-pos** runs on chittie (its `@ordereka/receipt` package), lifting the
+  print-agent USB core into an in-process `print_escpos` Tauri command — prints on a real Xprinter,
+  auto-prints on sale, kicks the drawer, dithered logo, split-payment/refund receipts.
+- **The Chittie Companion + playground** printed real receipts — including a **Sinhala line** — on a
+  real **58mm ET PR-10** over direct USB (the `N32G43x` device), end to end (playground → companion
+  SDK → printer). That run is what surfaced and fixed the non-Latin spacing bug.
+
+Two **hardware-gated** gaps remain testable now that a printer is on the desk: **print status
+feedback** and **label (TSPL) verification**.
 
 ## Shipped
 
-- `0.1.0` core suite (codepage/core/react/text, transports, preview, print-agent).
-- `0.1.x` gap closes: printer profiles (58/80mm), `<Row>` non-Latin raster, `findWritableCharacteristic`, cheap-printer chunk preset; changesets CI (publishes via `pnpm -r publish` so `workspace:*` is stripped).
-- `0.2.0` typographic folding (`× → x`, `… → ...`, …) — receipts stop throwing on smart punctuation.
-- `0.3.0` `formatMoney` (RN-safe, no Intl) + `sanitizeControl` (strip injected ESC/GS from user text).
-- `0.4.0` **`@angadie/chittie-label`** — TSPL label/tag printing (barcodes incl. EAN-13/Code128, QR, text, box, raster + non-Latin) — the fashion price-tag gap, as a standalone package.
-- `0.5.0` **`@angadie/chittie-label-react`** — pure JSX authoring for labels (`<Label>` + positioned `<LText>/<LBarcode>/<LQR>/<LBox>/<LBar>/<LImage>`), mirroring chittie-react.
-- `chittie-preview 0.6.0` — `renderLabel` (TSPL → canvas) so labels get the same hardware-free preview as receipts; playground gains a Label/Tag tab.
+- `0.1.x` core suite (codepage/core/react/text, transports, preview, print-agent); printer profiles
+  (58/80mm), `<Row>` non-Latin raster; changesets CI (publishes via `pnpm -r publish`, strips `workspace:*`).
+- `0.2.0` typographic folding; `0.3.0` `formatMoney` (RN-safe, no Intl) + `sanitizeControl`.
+- `0.4.0` **`@angadie/chittie-label`** (TSPL labels: EAN-13/Code128/QR/text/box/raster + non-Latin).
+- `0.5.0` **`@angadie/chittie-label-react`** (positioned JSX labels); `chittie-preview 0.6.0` `renderLabel`.
+- **dpi-aware rasterization** + `fontFamilies` + `createBestTransport` (0.6.0); cross-platform
+  `TextRasterizer` interface (canvas verified; skia/takumi/server backends).
+- **`chittie-text/react 0.7.0`** — fix double-spaced non-Latin lines (`smartText` reports raster;
+  `<Text>` skips the redundant feed). Found on real 58mm hardware.
+- **`@angadie/chittie-companion` SDK** — discover → print-to-pinned-station → result; never a silent
+  fallback. Full integration manual (`packages/chittie-companion/MANUAL.md`).
+- **Chittie Companion (Tauri app)** — the print bridge + diagnostics, store-owner-first UI
+  (status / pin printer / auto-detect / virtual-mode toggle), **autostart + close-to-tray** (one-time
+  setup), runtime branding. **CI builds installers for Windows + macOS** (unsigned; Linux WIP).
+- **Web playground** — author → live preview → print via the companion SDK; deployed to Cloudflare
+  Pages (`chittie-playground.pages.dev`) for shareable UI/preview.
+- **PNA header** on the agent — hosted HTTPS POS can reach localhost on Chrome/Edge.
 
-## Roadmap
+## Roadmap (pending)
 
-### Now — proof & narrative
-- [ ] **Web playground** — textarea/JSX → live PNG (`chittie-preview`) + "print to your USB printer" (Web Serial). The single highest-leverage story asset; demos the Sinhala differentiator in-browser.
-- [ ] **First posts** — (1) "Printing Sinhala/Tamil when no code page exists"; (2) "Why we did *not* build a Nitro module"; (3) "Running your RN library under real Hermes in CI"; (4) "ArrayBuffer zero-copy for BLE writes".
-- [ ] **Discoverability** — `ci.yml` (run `pnpm check` on PRs) + README badges + reactnative.directory listing.
+### Reliability (highest value)
+- [ ] **Print status feedback** (#1) — `DLE EOT`/`GS r` read for paper-out / cover-open / printed-ok;
+  needs a read-capable transport. **Hardware-gated** — design below.
+- [ ] **Paper size on `/health`** — companion declares 58/80mm so the POS can't build the wrong width
+  (the lesson from the 58mm wrap).
 
-### Next — dogfood-driven (designs below)
-- [ ] **Print status feedback** (#1 reliability) — see design.
-- [x] **`chittie-label`** + **`chittie-label-react`** — TSPL label/tag printing (builder `0.4.0`, JSX `0.5.0`). Next: label support in chittie-preview; verify on ordereka's label hardware.
-- [ ] **Logo raster caching** — ordereka solved app-side (`v1.0.6`); upstream a cache so every consumer benefits.
-- [x] **Cross-platform rasterizers** — one `TextRasterizer` interface, a backend per platform: canvas (web/node, verified), skia (RN), takumi-wasm (edge), server (Expo Go). dpi-aware sizing + `fontFamilies` + `createBestTransport` shipped (0.6.0). See `examples/rasterizers`. Remaining: on-device RN verify (Skia/captureRef `readPixels`) — hardware-gated.
-- [ ] **i18n breadth** — code pages already exist for Thai (`cp874`), Japanese (`shiftjis`), Arabic; add selection guidance + RTL/bidi handling for `<Row>`.
-- [ ] **print-agent threat model** — drawer-pop abuse / DoS over localhost; document + token-gate the drawer pulse.
-- [ ] **print-agent virtual printer port ("studio mode")** + embeddable-core split — register an OS print device (CUPS backend / Windows RedMon port) that feeds the agent; `POST /print-raw`; a vendoring guide so others lift it like ordereka did. Design: `tools/print-agent/VIRTUAL-PRINTER.md`.
-- [ ] **Companion (Tauri app) + JS SDK + multi-station (KOT/BOT)** — one Rust core, three shells (headless service / Tauri companion app = dev studio / vendor's own Tauri-embed or Electron-sidecar); `@angadie/chittie-companion` client (discover → print-to-pinned-station → result); capability-detect mechanism + pinned-per-station config + onboarding (no shotgun). Finalized design: **`docs/architecture.md`**; vendor how-to: **`docs/pos-vendor-guide.md`**.
+### Hosted web POS — trusted localhost
+- [x] **PNA header** → Chrome/Edge/Firefox hosted POS reach localhost.
+- [ ] **localhost TLS (Path B)** — public loopback cert (`printer.<domain>` → `127.0.0.1`) served via
+  `rustls`, so **Safari/iPad** and all browsers work. Decision record: `docs/localhost-tls.md`.
+
+### Distribution
+- [ ] **Fix the Linux companion build** (Windows + macOS green; Linux job failed).
+- [ ] **Auto-updater** (Tauri updater + signed `latest.json`, as ordereka does).
+- [ ] **Code signing / notarization** (optional; removes SmartScreen/Gatekeeper warnings for
+  non-technical owners — distribution works unsigned until then).
+
+### Labels
+- [ ] **Verify TSPL on real label hardware** (ordereka's label printer) before claiming done.
+
+### Breadth / hardening
+- [ ] **i18n breadth** — Thai (`cp874`) / Japanese (`shiftjis`) / Arabic selection guidance + RTL/bidi for `<Row>`.
+- [ ] **Upstream logo raster caching** (ordereka solved it app-side; every consumer should benefit).
+- [ ] **On-device RN rasterizer verify** (Skia / `captureRef` `readPixels`) — hardware-gated.
+- [ ] **print-agent threat model** — drawer-pop DoS over localhost; token-gate the pulse.
+- [ ] **Studio mode** — register an OS print device (CUPS backend / Windows RedMon) feeding the agent;
+  design: `tools/print-agent/VIRTUAL-PRINTER.md`.
+
+### Narrative (the missing half of the flywheel)
+- [ ] **First posts** — (1) "Printing Sinhala/Tamil when no code page exists"; (2) "Why we did *not*
+  build a Nitro module"; (3) "Running an RN library under real Hermes in CI"; (4) "Finding a print bug
+  only real hardware shows" (the 58mm double-feed).
+- [ ] **Discoverability** — `ci.yml` (`pnpm check` on PRs) + README badges + reactnative.directory listing.
 
 ---
 
 ## Design: print status feedback (#1)
 
-**Problem.** The transport contract is write-only; `print_escpos` returns on *write* success,
-never reading the printer. A POS can't tell paper-out / cover-open / printed-ok → risks
-double-charge vs. reprint.
+**Problem.** The transport contract is write-only; `print_escpos` returns on *write* success, never
+reading the printer. A POS can't tell paper-out / cover-open / printed-ok → double-charge vs reprint risk.
 
-**Approach.** ESC/POS real-time status is `DLE EOT n` (n=1 printer, 2 offline, 3 error,
-4 paper-roll), and `GS r n`. These require a **read-capable** transport.
+**Approach.** ESC/POS real-time status is `DLE EOT n` (1 printer, 2 offline, 3 error, 4 paper) and
+`GS r n`, which need a **read-capable** transport.
+1. Extend `Transport` with an *optional* `read(timeoutMs)` (USB bulk-in, serial read, BLE notify);
+   transports that can't read omit it — `print()` is unchanged.
+2. `queryStatus(transport)` in chittie-transport: write `DLE EOT 4` (+ others), parse the byte into
+   `{ online, paperOut, coverOpen, error }`.
+3. print-agent: bulk-in the status byte after bulk-out; expose on `/print` + `/health`.
 
-1. Extend the `Transport` contract with an *optional* `read(timeoutMs)` (USB bulk-in, serial
-   read, BLE notify). Transports that can't read simply omit it — `print()` stays unchanged.
-2. Add `queryStatus(transport)` to chittie-transport: write `DLE EOT 4` (+ others), parse the
-   one-byte reply into `{ online, paperOut, coverOpen, error }`.
-3. `print-agent`: after USB bulk-out, bulk-in the status byte; expose on `/print` response and `/health`.
+**Verification needs hardware** — the 58mm ET PR-10 / ordereka's Xprinter. Do *not* mark done without
+a real paper-out / cover-open observation.
 
-**Verification needs hardware** — ordereka's Xprinter is the verifier. Do *not* mark done
-without a real paper-out / cover-open observation.
+## Design: localhost TLS for hosted web POS
 
-## Design: chittie-label (#2, fashion price tags)
+See `docs/localhost-tls.md` — corrected browser facts (localhost is a secure origin; PNA is the
+Chrome/Edge gate, not mixed content; Safari needs real hostname + TLS), the two paths (local CA vs
+public loopback cert), and the decision (**Path B** for the retail product, `rcgen`/`rustls`
+in-process, TLS behind a flag, HTTP default for now).
 
-**Problem.** chittie is ESC/POS receipts only. Fashion (ordereka) prints **garment price
-tags / barcode labels**, and most label printers speak **TSPL/EPL/ZPL**, not ESC/POS.
+## Design: companion architecture
 
-**Approach.** A separate package `@angadie/chittie-label` (own command family, own story —
-"we extended into labels"), not bolted onto the receipt core:
-- TSPL first (most common on cheap label printers): `SIZE`, `GAP`, `TEXT`, `BARCODE`, `QRCODE`, `PRINT`.
-- Same injected-transport contract as chittie (reuse `chittie-transport`).
-- A `<Label>` JSX surface mirroring chittie-react, + `chittie-preview` support for label bitmaps.
-- Verify on ordereka's label hardware before claiming done.
+See `docs/architecture.md` (one Rust core, three shells) and `docs/companion-product.md` (one app /
+progressive disclosure / autostart / distribution). The companion app, SDK, and multi-station (KOT/BOT)
+are shipped; remaining companion work is listed under Distribution + Hosted web POS above.
+
+## Design: chittie-label (shipped)
+
+A separate package `@angadie/chittie-label` (own command family, own story), not bolted onto the
+receipt core: TSPL first (`SIZE`/`GAP`/`TEXT`/`BARCODE`/`QRCODE`/`PRINT`), same injected-transport
+contract, a `<Label>` JSX surface, `chittie-preview` `renderLabel`. **Remaining: verify on real label
+hardware** (see Labels above).
