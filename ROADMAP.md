@@ -56,10 +56,11 @@ feedback** and **label (TSPL) verification**.
 ## Roadmap (pending)
 
 ### Reliability (highest value)
-- [ ] **Print status feedback** (#1) — `DLE EOT`/`GS r` read for paper-out / cover-open / printed-ok;
-  needs a read-capable transport. **Hardware-gated** — design below.
-- [ ] **Paper size on `/health`** — companion declares 58/80mm so the POS can't build the wrong width
-  (the lesson from the 58mm wrap).
+- [~] **Print status feedback** (#1) — transport `queryStatus()` (`DLE EOT`) **shipped**
+  (chittie-transport 0.6.0); the agent's USB bulk-in read is **hardware-gated** (nusb's reader is
+  blocking → needs the async/timeout path + a device). Design below.
+- [x] **Paper size on `/health`** — agent declares 58/80mm (`CHITTIE_PAPER`) on `/health`; SDK
+  `Health.paper` (chittie-companion 0.7.0).
 
 ### Hosted web POS — trusted localhost
 - [x] **PNA header** → Chrome/Edge/Firefox hosted POS reach localhost.
@@ -68,7 +69,8 @@ feedback** and **label (TSPL) verification**.
 
 ### Distribution
 - [ ] **Fix the Linux companion build** (Windows + macOS green; Linux job failed).
-- [ ] **Auto-updater** (Tauri updater + signed `latest.json`, as ordereka does).
+- [x] **Auto-updater** — `tauri-plugin-updater` + signed artifacts + tray "Check for updates"
+  (wired; CI signs via `TAURI_SIGNING_PRIVATE_KEY`; verifies once a release is published).
 - [ ] **Code signing / notarization** (optional; removes SmartScreen/Gatekeeper warnings for
   non-technical owners — distribution works unsigned until then).
 
@@ -76,12 +78,14 @@ feedback** and **label (TSPL) verification**.
 - [ ] **Verify TSPL on real label hardware** (ordereka's label printer) before claiming done.
 
 ### Breadth / hardening
-- [ ] **i18n breadth** — Thai (`cp874`) / Japanese (`shiftjis`) / Arabic selection guidance + RTL/bidi for `<Row>`.
-- [ ] **Upstream logo raster caching** (ordereka solved it app-side; every consumer should benefit).
-- [ ] **On-device RN rasterizer verify** (Skia / `captureRef` `readPixels`) — hardware-gated.
+- [x] **i18n breadth + RTL** — `rtl` on `<Row>`/`rasterizeRow` + `docs/i18n.md` selection guidance
+  (chittie-text/react 0.8.0).
+- [x] **Raster caching** — `cacheRasterizer` (LRU memo of raster output) upstreamed (chittie-text 0.8.0).
+- [ ] **RN native package** — see `docs/rfc/rn-native.md` (`@angadie/chittie-native`: Nitro rasterizer
+  + read-capable BLE/USB/TCP transports; Phase 1 = rasterizer). Replaces "on-device RN rasterizer verify".
 - [ ] **print-agent threat model** — drawer-pop DoS over localhost; token-gate the pulse.
-- [ ] **Studio mode** — register an OS print device (CUPS backend / Windows RedMon) feeding the agent;
-  design: `tools/print-agent/VIRTUAL-PRINTER.md`.
+- [x] **Studio mode** — CUPS backend + installers shipped (`tools/print-agent/studio/`); the
+  `lpadmin`/RedMon install + end-to-end print is OS/sudo-gated.
 
 ### Narrative (the missing half of the flywheel)
 - [ ] **First posts** — (1) "Printing Sinhala/Tamil when no code page exists"; (2) "Why we did *not*
