@@ -1,5 +1,12 @@
 # @angadie/chittie-transport-react-native
 
+## 0.5.1
+
+### Patch Changes
+
+- Updated dependencies [9203d4e]
+  - @angadie/chittie-transport@0.6.0
+
 ## 0.5.0
 
 ### Minor Changes

@@ -1,5 +1,17 @@
 # @angadie/chittie-text
 
+## 0.8.0
+
+### Minor Changes
+
+- 1d0e1f1: Add `cacheRasterizer(inner, maxEntries?)` — an LRU-memoizing wrapper around a `TextRasterizer`
+  so repeated `(text, options)` pairs (the same header/greeting/labels on every receipt) are
+  shaped once and reused. Upstreams the logo/raster-caching pattern ordereka built app-side.
+- 527f8b0: RTL/bidi support for rows. `rasterizeRow` and `<Row>` take `rtl` — the label reads flush-right
+  and the value flush-left (Arabic/Hebrew reading order), mirroring both the raster and code-page
+  table paths. Arabic/RTL text should be rasterized (the canvas/Skia backend shapes joining forms
+  and bidi); see docs/i18n.md for code-page selection guidance (Thai cp874, Japanese shiftjis, …).
+
 ## 0.7.0
 
 ### Minor Changes

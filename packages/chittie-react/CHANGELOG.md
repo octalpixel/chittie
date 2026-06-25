@@ -1,5 +1,20 @@
 # @angadie/chittie-react
 
+## 0.8.0
+
+### Minor Changes
+
+- 527f8b0: RTL/bidi support for rows. `rasterizeRow` and `<Row>` take `rtl` — the label reads flush-right
+  and the value flush-left (Arabic/Hebrew reading order), mirroring both the raster and code-page
+  table paths. Arabic/RTL text should be rasterized (the canvas/Skia backend shapes joining forms
+  and bidi); see docs/i18n.md for code-page selection guidance (Thai cp874, Japanese shiftjis, …).
+
+### Patch Changes
+
+- Updated dependencies [1d0e1f1]
+- Updated dependencies [527f8b0]
+  - @angadie/chittie-text@0.8.0
+
 ## 0.7.0
 
 ### Minor Changes

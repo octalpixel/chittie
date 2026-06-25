@@ -1,6 +1,6 @@
 {
   "name": "@angadie/chittie-companion",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Client SDK for the chittie print companion: discover printers, print to a pinned station, and get back exactly where it printed. Web + RN + Node (fetch-based).",
   "license": "MIT",
   "type": "module",

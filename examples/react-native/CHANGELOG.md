@@ -1,5 +1,14 @@
 # @angadie/example-react-native
 
+## 0.0.8
+
+### Patch Changes
+
+- Updated dependencies [9203d4e]
+  - @angadie/chittie-transport@0.6.0
+  - @angadie/chittie@0.5.3
+  - @angadie/chittie-transport-react-native@0.5.1
+
 ## 0.0.7
 
 ### Patch Changes

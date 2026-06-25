@@ -1,5 +1,12 @@
 # @angadie/chittie-transport-web
 
+## 0.6.1
+
+### Patch Changes
+
+- Updated dependencies [9203d4e]
+  - @angadie/chittie-transport@0.6.0
+
 ## 0.6.0
 
 ### Minor Changes

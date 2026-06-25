@@ -1,6 +1,6 @@
 {
   "name": "@angadie/chittie-label",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "TSPL label/tag printing for chittie — barcodes, QR, text, boxes, and rasterized images (incl. non-Latin) on coordinate-positioned labels. Universal (web/RN/node), Buffer-free.",
   "license": "MIT",
   "type": "module",

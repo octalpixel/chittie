@@ -1,5 +1,18 @@
 # @angadie/example-playground
 
+## 0.0.6
+
+### Patch Changes
+
+- Updated dependencies [1a340dd]
+- Updated dependencies [9203d4e]
+  - @angadie/chittie-companion@0.7.0
+  - @angadie/chittie-transport@0.6.0
+  - @angadie/chittie-preview@0.6.0
+  - @angadie/chittie@0.5.3
+  - @angadie/chittie-transport-web@0.6.1
+  - @angadie/chittie-label-react@0.5.3
+
 ## 0.0.5
 
 ### Patch Changes
