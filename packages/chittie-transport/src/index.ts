@@ -8,8 +8,59 @@ export interface Transport {
   connect?(): Promise<void>;
   /** Write raw bytes to the printer. The one required method. */
   write(data: Uint8Array): Promise<void>;
+  /**
+   * Optional: read bytes back from the printer (USB bulk-in, serial read, BLE
+   * notify). Required only for status queries; transports that can't read omit
+   * it and `print()` is unaffected. Resolves with whatever arrived within
+   * `timeoutMs` (possibly empty).
+   */
+  read?(timeoutMs: number): Promise<Uint8Array>;
   /** Optional: close the connection. */
   disconnect?(): Promise<void>;
+}
+
+/** Decoded ESC/POS real-time status (DLE EOT). `raw` keeps the source bytes. */
+export interface PrinterStatus {
+  online: boolean;
+  coverOpen: boolean;
+  paperOut: boolean;
+  paperNearEnd: boolean;
+  error: boolean;
+  raw: { printer?: number; offline?: number; error?: number; paper?: number };
+}
+
+/** DLE EOT n — real-time status request (n: 1 printer, 2 offline, 3 error, 4 paper). */
+const dleEot = (n: number) => new Uint8Array([0x10, 0x04, n]);
+
+/**
+ * Query a printer's real-time status over a read-capable transport. Writes the
+ * DLE EOT transmissions and parses the one-byte replies. Throws if the transport
+ * can't read. The reply's fixed bits are ignored; only data bits (2,3,5,6) matter.
+ */
+export async function queryStatus(transport: Transport, timeoutMs = 1500): Promise<PrinterStatus> {
+  if (!transport.read) {
+    throw new Error(
+      'chittie-transport: queryStatus needs a read-capable transport (USB bulk-in / serial read / BLE notify).'
+    );
+  }
+  if (transport.connect) await transport.connect();
+  const ask = async (n: number): Promise<number | undefined> => {
+    await transport.write(dleEot(n));
+    const reply = await transport.read!(timeoutMs);
+    return reply.length > 0 ? reply[reply.length - 1] : undefined; // status is the last byte
+  };
+  const printer = await ask(1);
+  const offline = await ask(2);
+  const error = await ask(3);
+  const paper = await ask(4);
+  return {
+    online: printer != null ? (printer & 0x08) === 0 : true,
+    coverOpen: offline != null ? (offline & 0x04) !== 0 : false,
+    paperOut: paper != null ? (paper & 0x60) === 0x60 : false,
+    paperNearEnd: paper != null ? (paper & 0x0c) !== 0 : false,
+    error: error != null ? (error & 0x48) !== 0 : false,
+    raw: { printer, offline, error, paper },
+  };
 }
 
 /** Split bytes into fixed-size chunks (e.g. for a BLE MTU). */
