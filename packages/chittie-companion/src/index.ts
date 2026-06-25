@@ -18,6 +18,8 @@ export interface Health {
   platform?: string;
   /** "print" or "virtual" (renders a PNG instead of printing). */
   mode?: string;
+  /** Declared paper width ("58mm" | "80mm") — build the receipt to match. */
+  paper?: string;
 }
 
 export type PrintResult =

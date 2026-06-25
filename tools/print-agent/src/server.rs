@@ -25,6 +25,9 @@ pub struct ServeOptions {
     pub allow_origin: String,
     pub virtual_mode: bool,
     pub out_dir: PathBuf,
+    /// Declared paper width ("58mm" | "80mm"), surfaced on /health so the POS
+    /// builds the right column width instead of guessing.
+    pub paper: String,
 }
 
 impl Default for ServeOptions {
@@ -35,6 +38,7 @@ impl Default for ServeOptions {
             allow_origin: "*".into(),
             virtual_mode: false,
             out_dir: PathBuf::from("chittie-receipts"),
+            paper: "80mm".into(),
         }
     }
 }
@@ -86,6 +90,7 @@ fn route(request: &mut Request, cfg: &ServeOptions) -> Resp {
                 "version": VERSION,
                 "platform": std::env::consts::OS,
                 "mode": if cfg.virtual_mode { "virtual" } else { "print" },
+                "paper": cfg.paper,
             }),
             cfg,
         ),

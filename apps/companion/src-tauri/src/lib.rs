@@ -100,7 +100,8 @@ pub fn run_app() {
         let port = std::env::var("CHITTIE_PORT").ok().and_then(|s| s.parse().ok()).unwrap_or(8930);
         let token = std::env::var("CHITTIE_TOKEN").ok().filter(|s| !s.is_empty());
         let virtual_mode = std::env::var("CHITTIE_VIRTUAL").is_ok();
-        if let Err(e) = run(ServeOptions { port, token, virtual_mode, ..Default::default() }) {
+        let paper = std::env::var("CHITTIE_PAPER").ok().filter(|s| !s.is_empty()).unwrap_or_else(|| "80mm".into());
+        if let Err(e) = run(ServeOptions { port, token, virtual_mode, paper, ..Default::default() }) {
             eprintln!("[companion] server stopped: {e}");
         }
     });
