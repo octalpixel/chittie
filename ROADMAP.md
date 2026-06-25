@@ -81,8 +81,10 @@ feedback** and **label (TSPL) verification**.
 - [x] **i18n breadth + RTL** — `rtl` on `<Row>`/`rasterizeRow` + `docs/i18n.md` selection guidance
   (chittie-text/react 0.8.0).
 - [x] **Raster caching** — `cacheRasterizer` (LRU memo of raster output) upstreamed (chittie-text 0.8.0).
-- [ ] **RN native package** — see `docs/rfc/rn-native.md` (`@angadie/chittie-native`: Nitro rasterizer
-  + read-capable BLE/USB/TCP transports; Phase 1 = rasterizer). Replaces "on-device RN rasterizer verify".
+- [~] **RN native package** — `@angadie/chittie-react-native` **scaffolded + TS-verified** (Nitro
+  rasterizer, RFC Phase 1: spec + Swift/Kotlin impls + adapter spike + monorepo gate). **Device-gated:**
+  `nitro-codegen` + iOS/Android compile + on-device glyph snapshot (npm publish held until then).
+  RFC: `docs/rfc/rn-native.md`. Next: Phase 2 BLE transport + status.
 - [ ] **print-agent threat model** — drawer-pop DoS over localhost; token-gate the pulse.
 - [x] **Studio mode** — CUPS backend + installers shipped (`tools/print-agent/studio/`); the
   `lpadmin`/RedMon install + end-to-end print is OS/sudo-gated.
