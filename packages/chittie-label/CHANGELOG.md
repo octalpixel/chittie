@@ -1,5 +1,17 @@
 # @angadie/chittie-label
 
+## 0.6.3
+
+### Patch Changes
+
+- Add a `default` condition to every package's `exports` (alongside `import`). ESM-only exports
+  (`"import"` only) made the packages unresolvable by CJS/tsx/jest resolvers
+  (`ERR_PACKAGE_PATH_NOT_EXPORTED`); `default` makes them resolvable everywhere without changing the
+  ESM output.
+- Updated dependencies
+  - @angadie/chittie-codepage@0.5.1
+  - @angadie/chittie-text@0.8.1
+
 ## 0.6.2
 
 ### Patch Changes

@@ -42,7 +42,7 @@
     "chittie"
   ],
   "peerDependencies": {
-    "@angadie/chittie-text": ">=0.8.0",
+    "@angadie/chittie-text": ">=0.8.1",
     "react": "*",
     "react-native": "*",
     "react-native-nitro-modules": "*"

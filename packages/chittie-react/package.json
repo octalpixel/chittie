@@ -1,6 +1,6 @@
 {
   "name": "@angadie/chittie-react",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "Pure JSX receipt authoring → ESC/POS bytes. RN-safe (no react-dom, no HTML host elements). Renders onto chittie-core.",
   "license": "MIT",
   "type": "module",
@@ -8,7 +8,8 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.mts",
-      "import": "./dist/index.mjs"
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
     }
   },
   "files": [

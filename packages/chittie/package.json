@@ -1,6 +1,6 @@
 {
   "name": "@angadie/chittie",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "Batteries-included receipt printing: builder + JSX authoring → ESC/POS bytes. The front door that re-exports chittie-core + chittie-react.",
   "license": "MIT",
   "type": "module",
@@ -8,7 +8,8 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.mts",
-      "import": "./dist/index.mjs"
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
     }
   },
   "files": [

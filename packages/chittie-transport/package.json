@@ -1,6 +1,6 @@
 {
   "name": "@angadie/chittie-transport",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Transport contract for chittie: { connect; write; disconnect } + chunk()/writeBytes/print helpers. Zero runtime deps.",
   "license": "MIT",
   "type": "module",
@@ -8,7 +8,8 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.mts",
-      "import": "./dist/index.mjs"
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
     }
   },
   "files": [

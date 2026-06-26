@@ -1,5 +1,14 @@
 # @angadie/chittie-codepage
 
+## 0.5.1
+
+### Patch Changes
+
+- Add a `default` condition to every package's `exports` (alongside `import`). ESM-only exports
+  (`"import"` only) made the packages unresolvable by CJS/tsx/jest resolvers
+  (`ERR_PACKAGE_PATH_NOT_EXPORTED`); `default` makes them resolvable everywhere without changing the
+  ESM output.
+
 ## 0.5.0
 
 ### Minor Changes

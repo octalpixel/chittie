@@ -1,5 +1,16 @@
 # @angadie/chittie-transport-node
 
+## 0.5.2
+
+### Patch Changes
+
+- Add a `default` condition to every package's `exports` (alongside `import`). ESM-only exports
+  (`"import"` only) made the packages unresolvable by CJS/tsx/jest resolvers
+  (`ERR_PACKAGE_PATH_NOT_EXPORTED`); `default` makes them resolvable everywhere without changing the
+  ESM output.
+- Updated dependencies
+  - @angadie/chittie-transport@0.6.1
+
 ## 0.5.1
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@angadie/chittie-preview",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Render a receipt to an image by parsing the ESC/POS bytes chittie emits — a software preview of what the printer will print. Platform-neutral via an injected canvas (browser or @napi-rs/canvas).",
   "license": "MIT",
   "type": "module",
@@ -8,7 +8,8 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.mts",
-      "import": "./dist/index.mjs"
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
     }
   },
   "files": [
