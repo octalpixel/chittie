@@ -75,6 +75,15 @@
       details[open] summary { color: var(--ink); }
       .adv { font-size: .85rem; color: var(--muted); margin-top: 1rem; }
       .adv code { background: #efefee; padding: 1px 5px; border-radius: 4px; }
+
+      .footer { margin-top: 2.5rem; padding-top: 1.1rem; border-top: 1px solid var(--line);
+        text-align: center; font-size: .72rem; line-height: 1.4; color: var(--muted);
+        letter-spacing: .01em; user-select: none; }
+      .footer strong { font-weight: 600; }
+      .footer .sep { margin: 0 .4rem; opacity: .55; }
+      .footer a { color: var(--muted); text-decoration: none;
+        border-bottom: 1px solid transparent; transition: color .15s ease, border-color .15s ease; }
+      .footer a:hover { color: var(--ink); border-bottom-color: var(--line); }
     </style>
   </head>
   <body>
@@ -123,12 +132,24 @@
           <div id="all-printers" style="margin-top:1rem;"></div>
         </div>
       </details>
+
+      <footer class="footer">
+        A tool by <strong>Asyncdot Engineering</strong>
+        <span class="sep">·</span>
+        <a href="https://asyncdot.com" id="asyncdot-link">asyncdot.com</a>
+      </footer>
     </div>
 
     <script type="module">
       const invoke = (cmd, args) => window.__TAURI__.core.invoke(cmd, args);
       const $ = (id) => document.getElementById(id);
       const PKEY = 'chittie_printer';
+
+      // Open the credit link in the system browser (never navigate the app webview).
+      $('asyncdot-link')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        invoke('open_url', { url: 'https://asyncdot.com' }).catch(() => {});
+      });
       let chosen = localStorage.getItem(PKEY) || '';
       let targets = [];
 

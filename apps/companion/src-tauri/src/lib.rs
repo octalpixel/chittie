@@ -124,6 +124,12 @@ fn get_paper(state: tauri::State<Arc<Mutex<String>>>) -> String {
     state.lock().map(|p| p.clone()).unwrap_or_else(|_| "80mm".into())
 }
 
+/// Open a URL in the system browser (for the credit footer link).
+#[tauri::command]
+fn open_url(url: String) -> Result<(), String> {
+    open::that(url).map_err(|e| e.to_string())
+}
+
 /// Show + focus the main window (from the tray icon / menu).
 fn show_main(app: &tauri::AppHandle) {
     if let Some(w) = app.get_webview_window("main") {
@@ -230,7 +236,7 @@ pub fn run_app() {
                 let _ = window.hide();
             }
         })
-        .invoke_handler(tauri::generate_handler![print_escpos, list_printers, branding, set_autostart, autostart_enabled, set_paper, get_paper])
+        .invoke_handler(tauri::generate_handler![print_escpos, list_printers, branding, set_autostart, autostart_enabled, set_paper, get_paper, open_url])
         .run(tauri::generate_context!())
         .expect("error while running Chittie Companion");
 }
