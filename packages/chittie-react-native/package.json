@@ -1,6 +1,6 @@
 {
   "name": "@angadie/chittie-react-native",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "React Native (Nitro) backend for chittie: native non-Latin text rasterization (CoreText / android.graphics) implementing chittie's TextRasterizer. Dev-client / bare RN — not Expo Go.",
   "license": "MIT",
   "author": "angadie",
@@ -42,7 +42,7 @@
     "chittie"
   ],
   "peerDependencies": {
-    "@angadie/chittie-text": ">=0.8.1",
+    "@angadie/chittie-text": ">=0.9.0",
     "react": "*",
     "react-native": "*",
     "react-native-nitro-modules": "*"

@@ -1,5 +1,14 @@
 # @angadie/example-rasterizers
 
+## 0.0.7
+
+### Patch Changes
+
+- Updated dependencies [ec3cbe3]
+  - @angadie/chittie-text@0.9.0
+  - @angadie/chittie@0.5.8
+  - @angadie/chittie-preview@0.7.1
+
 ## 0.0.6
 
 ### Patch Changes

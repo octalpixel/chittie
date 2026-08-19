@@ -1,5 +1,11 @@
 # @angadie/chittie-label-react
 
+## 0.5.5
+
+### Patch Changes
+
+- @angadie/chittie-label@0.6.4
+
 ## 0.5.4
 
 ### Patch Changes
