@@ -169,6 +169,25 @@ class LineComposer {
         ...store,
       ]);
     } else {
+      /* Padding must print under the same font and style as the text it aligns.
+         A font change (or a stored style) sits at the head of the buffer and
+         has already widened #columns, so padding placed before it would be
+         measured in the new font but printed in the old one — off-centre by a
+         length-dependent amount. Split off the leading non-printing items and
+         put the padding after them. */
+
+      let split = 0;
+      while (
+        split < buffer.length &&
+        buffer[split].type !== 'text' &&
+        buffer[split].type !== 'space'
+      ) {
+        split++;
+      }
+
+      const lead = buffer.slice(0, split);
+      const body = buffer.slice(split);
+
       if (this.#align === 'right') {
         let last;
 
@@ -196,9 +215,10 @@ class LineComposer {
         }
 
         result = this.#merge([
-          {type: 'space', size: this.#columns - this.#cursor},
           ...this.#stored,
-          ...buffer,
+          ...lead,
+          {type: 'space', size: this.#columns - this.#cursor},
+          ...body,
           ...store,
         ]);
       }
@@ -207,9 +227,10 @@ class LineComposer {
         const left = (this.#columns - this.#cursor) >> 1;
 
         result = this.#merge([
-          {type: 'space', size: left},
           ...this.#stored,
-          ...buffer,
+          ...lead,
+          {type: 'space', size: left},
+          ...body,
           ...store,
           {type: 'space', size: this.#embedded ? this.#columns - this.#cursor - left : 0},
         ]);

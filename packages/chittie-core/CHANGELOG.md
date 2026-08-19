@@ -1,5 +1,21 @@
 # @angadie/chittie-core
 
+## 0.5.2
+
+### Patch Changes
+
+- Centre and right alignment now pad after the line's leading command bytes, so
+  the padding prints in the font it was measured against.
+
+  `font('B')` widens the composer's column count and queues the font-select
+  bytes, but the pad was placed at the head of the line — ahead of those bytes.
+  The spaces were therefore sized in Font B cells and printed at Font A width,
+  pushing a centred line right of centre by an amount that grew with the string
+  length. `<Text align="center" small>` was visibly off-centre on real receipts.
+
+  The same reordering puts the pad after a restored style, so a line following a
+  double-width one is no longer padded at the previous line's character width.
+
 ## 0.5.1
 
 ### Patch Changes

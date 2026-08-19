@@ -1,6 +1,6 @@
 {
   "name": "@angadie/chittie-react",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "description": "Pure JSX receipt authoring → ESC/POS bytes. RN-safe (no react-dom, no HTML host elements). Renders onto chittie-core.",
   "license": "MIT",
   "type": "module",
