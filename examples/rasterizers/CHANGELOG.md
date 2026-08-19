@@ -1,5 +1,12 @@
 # @angadie/example-rasterizers
 
+## 0.0.8
+
+### Patch Changes
+
+- @angadie/chittie@0.5.9
+- @angadie/chittie-preview@0.7.1
+
 ## 0.0.7
 
 ### Patch Changes

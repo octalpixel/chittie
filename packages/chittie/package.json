@@ -1,6 +1,6 @@
 {
   "name": "@angadie/chittie",
-  "version": "0.5.8",
+  "version": "0.5.9",
   "description": "Batteries-included receipt printing: builder + JSX authoring → ESC/POS bytes. The front door that re-exports chittie-core + chittie-react.",
   "license": "MIT",
   "type": "module",
