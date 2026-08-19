@@ -1,8 +1,10 @@
-import { Children, isValidElement, type ReactElement, type ReactNode } from 'react';
+import { isValidElement, type ReactElement, type ReactNode } from 'react';
 import ReceiptPrinterEncoder from '@angadie/chittie-core';
 import type { Codepage, TextRasterizer } from '@angadie/chittie-text';
 import { Printer } from './components.js';
-import { isPrintable, type Encoder, type RenderContext } from './printable.js';
+import { isPrintable } from './printable.js';
+import type { RenderContext } from './printable.js';
+import { walk } from './walk.js';
 
 /**
  * Resolve a custom function-component root down to the <Printer> element it
@@ -64,23 +66,4 @@ export function render(element: ReactElement, options: RenderOptions = {}): Uint
     codepage: options.codepage,
   });
   return encoder.encode();
-}
-
-function walk(node: ReactNode, encoder: Encoder, ctx: RenderContext): void {
-  for (const child of Children.toArray(node)) {
-    if (!isValidElement(child)) continue;
-    const type = child.type as unknown;
-    if (isPrintable(type)) {
-      type.print(encoder, (child.props ?? {}) as Record<string, unknown>, ctx);
-      continue;
-    }
-    if (typeof type === 'function') {
-      // user-defined wrapper component: invoke and recurse into its output
-      const rendered = (type as (p: unknown) => ReactNode)(child.props);
-      walk(rendered, encoder, ctx);
-    } else {
-      // fragment / unknown host: recurse into children
-      walk((child.props as { children?: ReactNode }).children, encoder, ctx);
-    }
-  }
 }

@@ -34,8 +34,11 @@ const bytes = render(
 |---|---|---|
 | `<Printer>` | `width` (columns, default 48) | the root; sets line width |
 | `<Text>` | `align`, `bold`, `underline`, `invert`, `size` ({width,height} multipliers), `small`, `inline` | text (or image — see below) + newline |
-| `<Row>` | `left`, `right`, `rtl` | a two-column justified row (`rtl`: label flush-right, value flush-left) |
-| `<Line>` | — | a horizontal rule |
+| `<Row>` | `left`, `right`, `rtl`, `gap`, `marginLeft`, `marginRight` | a two-column justified row (`rtl`: label flush-right, value flush-left) |
+| `<Columns>` | `gap` | a row of `<Column>` cells — the general form of `<Row>` |
+| `<Column>` | `width`, `align`, `verticalAlign`, `marginLeft`, `marginRight` | one cell; omit `width` on one column to take the remainder |
+| `<Box>` | `style`, `width`, `align`, `marginLeft`, `marginRight`, `paddingLeft`, `paddingRight` | an indented block, optionally bordered |
+| `<Line>` | `style` (`single`/`double`), `width` | a horizontal rule |
 | `<Br>` | `lines` | blank line(s) |
 | `<Feed>` | `dots` | precise vertical space (ESC J) — finer than `<Br>` |
 | `<Cut>` | `partial` | paper cut |
@@ -47,6 +50,59 @@ const bytes = render(
 **Spacing & fine print:** `<Br lines>` adds blank lines; `<Feed dots>` adds dot-precise space (ESC J);
 `<Text small>` prints in the smaller **Font B** (~9×17 vs A 12×24) for footers / "Powered by…" lines —
 and `chittie-preview` renders it smaller too. For RTL rows (Arabic/Hebrew) pass `<Row rtl>`.
+
+### Layout — columns, gaps, indentation
+
+Receipt layout is a character grid, not a pixel canvas: text is positioned to
+the character, never to the dot. Within that grid you get columns, margins,
+padding, indentation and borders.
+
+**`<Row gap>` — never let a value touch its label.** `<Row>` gives the right
+cell its natural width and the left cell whatever remains, so a label that
+exactly fills the line ends up flush against the value:
+
+```tsx
+<Row left="1x Raththi milk powder" right="Rs. 120.00" />
+// 1x Raththi milk powderRs. 120.00     ← 22 + 10 == 32 exactly
+
+<Row left="1x Raththi milk powder" right="Rs. 120.00" gap={1} />
+// 1x Raththi milk       Rs. 120.00
+// powder
+```
+
+**`<Columns>` — size the columns yourself.** Leave `width` off one column and
+it absorbs the remainder. Cells wrap inside their own width, so a continuation
+line stays under its column:
+
+```tsx
+<Columns gap={1}>
+  <Column width={3}><Text>2x</Text></Column>
+  <Column><Text>Almond croissant with salted caramel</Text></Column>
+  <Column width={12} align="right"><Text>Rs. 1,300.00</Text></Column>
+</Columns>
+// 2x  Almond croissant with     Rs. 1,300.00
+//     salted caramel
+```
+
+**`<Box>` — the only way to indent.** Leading whitespace is stripped from
+`<Text>` and `<Row>`, so spaces cannot indent anything. A box can:
+
+```tsx
+<Box marginLeft={3}>
+  <Row left="+ Hand embroidery on neckline and cuffs" right="Rs. 8,000.00" gap={1} />
+</Box>
+```
+
+It defaults to `style="none"` — a layout element, with a border you opt into.
+(The builder's `box()` defaults to `single`.) Give it `style="single"`,
+`paddingLeft` and `paddingRight` for a bordered notice.
+
+**Non-Latin inside a cell.** The engine refuses an image inside a table cell,
+so a row carrying Sinhala, Tamil or Arabic cannot be assembled per-cell.
+`<Columns>` detects it and rasterizes the whole row through the rasterizer you
+passed to `render()`, exactly as `<Row>` does — per-cell styling does not
+survive that path, and the cell text does. `<Box>` has no such fallback:
+non-Latin text inside a `<Box>` throws.
 
 ### `<Image>` — logos and bitmaps
 

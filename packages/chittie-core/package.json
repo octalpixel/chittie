@@ -21,7 +21,7 @@
   "scripts": {
     "build": "echo 'chittie-core ships ESM source (no build step)'",
     "typecheck": "echo 'no typecheck (vendored JS + shipped .d.ts)'",
-    "test": "node spikes/encode.spike.mjs && node spikes/rn-safety.spike.mjs && node spikes/align.spike.mjs"
+    "test": "node spikes/encode.spike.mjs && node spikes/rn-safety.spike.mjs && node spikes/align.spike.mjs && node spikes/layout.spike.mjs"
   },
   "dependencies": {
     "@angadie/chittie-codepage": "workspace:*",

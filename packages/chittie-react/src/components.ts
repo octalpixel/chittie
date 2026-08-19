@@ -1,6 +1,6 @@
-import { Fragment, isValidElement, type ReactNode } from 'react';
+import { Children, Fragment, isValidElement, type ReactNode } from 'react';
 import type { BarcodeSymbology, DitherAlgorithm } from '@angadie/chittie-core';
-import { smartText, padTo8, needsRaster, rasterizeRow, foldTypographic, sanitizeControl, dotsPerMm } from '@angadie/chittie-text';
+import { smartText, padTo8, needsRaster, rasterizeRow, rasterizeColumns, foldTypographic, sanitizeControl, dotsPerMm } from '@angadie/chittie-text';
 
 const clean = (s: string) => foldTypographic(sanitizeControl(s));
 // Base rasterized line height ≈ 3mm; scaled by the printer DPI so non-Latin text
@@ -8,6 +8,7 @@ const clean = (s: string) => foldTypographic(sanitizeControl(s));
 const BASE_MM = 3;
 const rasterPx = (dpi: number, scale = 1) => Math.round(BASE_MM * dotsPerMm(dpi) * scale);
 import type { Encoder, Printable, RenderContext } from './printable.js';
+import { walk } from './walk.js';
 
 export type Alignment = 'left' | 'center' | 'right';
 /** Character magnification (width/height multipliers, e.g. 2 = double). */
@@ -100,6 +101,15 @@ export interface RowProps {
   right?: ReactNode;
   /** Right-to-left reading order (Arabic/Hebrew): label reads flush-right, value flush-left. */
   rtl?: boolean;
+  /**
+   * Blank characters always kept between the two cells. Without it a label that
+   * exactly fills the remaining width sits flush against the value with nothing
+   * separating them; a gap makes the label wrap one character sooner instead.
+   * Ignored on a rasterized (non-Latin) row, which lays itself out in dots.
+   */
+  gap?: number;
+  marginLeft?: number;
+  marginRight?: number;
   children?: ReactNode;
 }
 export const Row = printable<RowProps>((e, p, ctx) => {
@@ -126,19 +136,202 @@ export const Row = printable<RowProps>((e, p, ctx) => {
   // RTL: value (right) flush-left, label (left) flush-right.
   const lead = p.rtl ? right : left;
   const trail = p.rtl ? left : right;
-  const trailW = Math.min(trail.length, ctx.columns);
-  const leadW = Math.max(0, ctx.columns - trailW);
+  const gap = p.gap ?? 0;
+  const marginLeft = p.marginLeft ?? 0;
+  const marginRight = p.marginRight ?? 0;
+  const usable = Math.max(1, ctx.columns - marginLeft - marginRight - gap);
+  const trailW = Math.min(trail.length, usable);
+  const leadW = Math.max(0, usable - trailW);
   e.table(
     [
-      { width: leadW, align: 'left' },
-      { width: trailW, align: 'right' },
+      { width: leadW, align: 'left', marginLeft },
+      { width: trailW, align: 'right', marginLeft: gap, marginRight },
     ],
     [[lead, trail]]
   );
 });
 
-export const Line = printable<{ children?: ReactNode }>((e) => {
-  e.rule();
+export interface LineProps {
+  /** Rule style — a single or double stroke. */
+  style?: 'single' | 'double';
+  /** Rule length in characters. Defaults to the full paper width. */
+  width?: number;
+  children?: ReactNode;
+}
+export const Line = printable<LineProps>((e, p) => {
+  e.rule({ style: p.style ?? 'single', ...(p.width === undefined ? {} : { width: p.width }) });
+});
+
+/**
+ * Flatten a cell's subtree to plain text. Unlike `toText` this descends through
+ * elements instead of throwing on them, because a cell legitimately holds
+ * <Text>/<Row>. Only used to decide whether a row needs rasterizing, and to
+ * feed the rasterizer — styling does not survive that path.
+ */
+function cellText(node: ReactNode): string {
+  let out = '';
+  for (const child of Children.toArray(node)) {
+    if (typeof child === 'string' || typeof child === 'number') {
+      out += String(child);
+      continue;
+    }
+    if (isValidElement(child)) {
+      const props = (child.props ?? {}) as { children?: ReactNode; left?: ReactNode; right?: ReactNode };
+      out += cellText(props.left);
+      out += cellText(props.children);
+      out += cellText(props.right);
+    }
+  }
+  return out;
+}
+
+/**
+ * Narrow the render context to a cell. `dotWidth` has to shrink with the column
+ * count, or rasterized non-Latin text inside a cell would be laid out against
+ * the full paper width and overflow its column.
+ */
+function cellContext(ctx: RenderContext, columns: number): RenderContext {
+  return {
+    ...ctx,
+    columns,
+    dotWidth: Math.max(8, Math.round((ctx.dotWidth * columns) / ctx.columns)),
+  };
+}
+
+export interface ColumnProps {
+  /**
+   * Width in characters. Leave it off exactly one column and that column takes
+   * whatever the sized columns, margins, and gaps leave over.
+   */
+  width?: number;
+  align?: Alignment;
+  /** Where a short cell sits when a sibling wraps to several lines. */
+  verticalAlign?: 'top' | 'bottom';
+  marginLeft?: number;
+  marginRight?: number;
+  children?: ReactNode;
+}
+/** A cell inside <Columns>. Rendered by its parent — never on its own. */
+export const Column = (_props: ColumnProps): null => null;
+
+export interface ColumnsProps {
+  /** Blank characters inserted between adjacent columns. */
+  gap?: number;
+  children?: ReactNode;
+}
+/**
+ * A row of columns, each with its own width, alignment, and margins — the
+ * general form of <Row>. Cells wrap inside their own width, and a short cell is
+ * padded so the row stays aligned. Children must be <Column> elements.
+ */
+export const Columns = printable<ColumnsProps>((e, p, ctx) => {
+  const cells: ColumnProps[] = [];
+  for (const child of Children.toArray(p.children)) {
+    if (!isValidElement(child)) continue;
+    if (child.type !== Column) {
+      throw new Error('chittie: <Columns> accepts only <Column> children.');
+    }
+    cells.push(child.props as ColumnProps);
+  }
+  if (cells.length === 0) return;
+
+  const gap = p.gap ?? 0;
+  const gaps = gap * Math.max(0, cells.length - 1);
+  const margins = cells.reduce((n, c) => n + (c.marginLeft ?? 0) + (c.marginRight ?? 0), 0);
+  const sized = cells.reduce((n, c) => n + (c.width ?? 0), 0);
+  const flexible = cells.filter((c) => c.width === undefined);
+  if (flexible.length > 1) {
+    throw new Error('chittie: <Columns> allows at most one <Column> without a width.');
+  }
+  const remainder = Math.max(1, ctx.columns - gaps - margins - sized);
+
+  const definitions = cells.map((c, i) => ({
+    width: c.width ?? remainder,
+    align: c.align ?? 'left',
+    ...(c.verticalAlign === undefined ? {} : { verticalAlign: c.verticalAlign }),
+    marginLeft: (c.marginLeft ?? 0) + (i > 0 ? gap : 0),
+    marginRight: c.marginRight ?? 0,
+  }));
+
+  // The engine refuses an image inside a table cell, so a row carrying
+  // non-Latin text can't be assembled per-cell — rasterize the whole row, the
+  // same way <Row> does. Cell text only; per-cell styling doesn't survive.
+  const texts = cells.map((cell) => clean(cellText(cell.children)));
+  if (texts.some((t) => needsRaster(t, ctx.codepage))) {
+    if (!ctx.rasterizer) {
+      throw new Error(
+        'chittie: <Columns> contains non-encodable text (e.g. Sinhala/Tamil/Arabic). Pass a rasterizer to render(), or use code-page text.'
+      );
+    }
+    const perColumn = ctx.dotWidth / ctx.columns;
+    const img = rasterizeColumns(
+      ctx.rasterizer,
+      definitions.map((d, i) => ({
+        text: texts[i]!,
+        width: Math.round(d.width * perColumn),
+        align: d.align,
+        marginLeft: Math.round(d.marginLeft * perColumn),
+      })),
+      {
+        dotWidth: ctx.dotWidth,
+        fontSize: rasterPx(ctx.dpi),
+        dpi: ctx.dpi,
+        fontFamilies: ctx.fontFamilies,
+      }
+    );
+    e.image(img, img.width, img.height);
+    return;
+  }
+
+  e.table(
+    definitions,
+    [
+      cells.map((cell, i) => (cellEncoder: Encoder) => {
+        walk(cell.children, cellEncoder, cellContext(ctx, definitions[i]!.width));
+      }),
+    ]
+  );
+});
+
+export interface BoxProps {
+  /**
+   * Border style. Defaults to `none` — a <Box> is a layout element here, and a
+   * border is something you opt into (chittie-core's builder defaults to
+   * `single`).
+   */
+  style?: 'none' | 'single' | 'double';
+  /** Width in characters. Defaults to whatever the margins leave. */
+  width?: number;
+  align?: Alignment;
+  marginLeft?: number;
+  marginRight?: number;
+  paddingLeft?: number;
+  paddingRight?: number;
+  children?: ReactNode;
+}
+/**
+ * An indented block. Content wraps inside the box, so it is the way to give a
+ * continuation line the same indent as its first line — leading whitespace is
+ * stripped from <Text> and <Row>, so spaces cannot do it.
+ */
+export const Box = printable<BoxProps>((e, p, ctx) => {
+  const style = p.style ?? 'none';
+  const marginLeft = p.marginLeft ?? 0;
+  const marginRight = p.marginRight ?? 0;
+  const paddingLeft = p.paddingLeft ?? 0;
+  const paddingRight = p.paddingRight ?? 0;
+  const width = p.width ?? ctx.columns - marginLeft - marginRight;
+  const inner = width - (style === 'none' ? 0 : 2) - paddingLeft - paddingRight;
+  if (inner < 1) {
+    throw new Error('chittie: <Box> has no room left for content — reduce its margins or padding.');
+  }
+
+  e.box(
+    { style, width, align: p.align ?? 'left', marginLeft, marginRight, paddingLeft, paddingRight },
+    (boxEncoder: Encoder) => {
+      walk(p.children, boxEncoder, cellContext(ctx, inner));
+    }
+  );
 });
 
 export interface BrProps {

@@ -637,7 +637,7 @@ class ReceiptPrinterEncoder {
         }));
 
         columnEncoder.codepage(this.#codepage);
-        columnEncoder.align(columns[c].align);
+        columnEncoder.align(columns[c].align || 'left');
 
         if (typeof data[r][c] === 'string') {
           columnEncoder.text(data[r][c]);
@@ -743,12 +743,19 @@ class ReceiptPrinterEncoder {
   box(options, contents) {
     options = Object.assign({
       style: 'single',
-      width: this.#options.columns,
       marginLeft: 0,
       marginRight: 0,
       paddingLeft: 0,
       paddingRight: 0,
+      align: 'left',
     }, options || {});
+
+    /* Default the width to whatever the margins leave, so box({marginLeft: 2})
+       fits instead of overflowing the paper. */
+
+    if (typeof options.width === 'undefined') {
+      options.width = this.#options.columns - options.marginLeft - options.marginRight;
+    }
 
     if (options.width + options.marginLeft + options.marginRight > this.#options.columns) {
       throw new Error('Box is too wide');

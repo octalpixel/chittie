@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "preview": "node receipt-to-png.mjs",
-    "preview:jsx": "tsx receipt-jsx.tsx"
+    "preview:jsx": "tsx receipt-jsx.tsx",
+    "preview:layout": "tsx layout-jsx.tsx"
   },
   "dependencies": {
     "@angadie/chittie": "workspace:*",

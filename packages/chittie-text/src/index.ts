@@ -184,10 +184,18 @@ function blank(template: ImageData, width: number, height: number): ImageData {
   return new Ctor(new Uint8ClampedArray(width * height * 4).fill(255), width, height);
 }
 
-function blit(dst: ImageData, src: ImageData, dx: number, dy: number): void {
+/**
+ * Copy `src` into `dst` at (dx, dy), clipped to `dst`'s right edge — and to
+ * `clipWidth` when given. Without the clip an over-wide fragment would spill
+ * into the following row of the buffer.
+ */
+function blit(dst: ImageData, src: ImageData, dx: number, dy: number, clipWidth?: number): void {
+  const room = Math.max(0, Math.min(src.width, dst.width - dx, clipWidth ?? src.width));
+  if (room === 0) return;
   for (let y = 0; y < src.height; y++) {
+    if (dy + y >= dst.height) break;
     const drow = ((dy + y) * dst.width + dx) * 4;
-    dst.data.set(src.data.subarray(y * src.width * 4, (y + 1) * src.width * 4), drow);
+    dst.data.set(src.data.subarray(y * src.width * 4, y * src.width * 4 + room * 4), drow);
   }
 }
 
@@ -218,6 +226,60 @@ export function rasterizeRow(
   } else {
     if (l) blit(out, l, 0, 0);
     if (r) blit(out, r, width - r.width, 0);
+  }
+  return padTo8(out);
+}
+
+/** One cell of a rasterized row: its text plus the slot it occupies, in dots. */
+export interface RasterColumn {
+  text: string;
+  /** Slot width in dots. */
+  width: number;
+  /** Where the text sits inside its slot. Default 'left'. */
+  align?: 'left' | 'center' | 'right';
+  /** Blank dots kept to the left of the slot. */
+  marginLeft?: number;
+}
+
+/**
+ * Render a row of N columns to one printer-width image. The engine refuses an
+ * image inside a table cell, so a row carrying non-Latin text cannot be built
+ * from per-cell images — the whole row has to become one raster. This is the
+ * general form of `rasterizeRow`: chittie computes each slot, the injected
+ * rasterizer shapes the text, and each fragment is blitted into its slot.
+ *
+ * A fragment wider than its slot is clipped to it, so one long cell can never
+ * push another off the paper.
+ */
+export function rasterizeColumns(
+  rasterizer: TextRasterizer,
+  columns: RasterColumn[],
+  options: { dotWidth: number } & RasterOptions
+): ImageData {
+  const { dotWidth, ...raster } = options;
+  const shaped = columns.map((c) =>
+    c.text ? rasterizer.rasterize(c.text, { ...raster, maxWidth: c.width }) : undefined
+  );
+  const template = shaped.find(Boolean);
+  if (!template) return padTo8(blankImage(8, 8));
+
+  const height = Math.max(1, ...shaped.map((i) => i?.height ?? 0));
+  const out = blank(template, dotWidth, height);
+
+  let x = 0;
+  for (let i = 0; i < columns.length; i++) {
+    const slot = columns[i]!;
+    x += slot.marginLeft ?? 0;
+    const img = shaped[i];
+    if (img) {
+      const room = Math.max(0, Math.min(slot.width, dotWidth - x));
+      const overflow = Math.max(0, img.width - room);
+      const align = slot.align ?? 'left';
+      const offset =
+        align === 'right' ? room - img.width : align === 'center' ? (room - img.width) >> 1 : 0;
+      blit(out, img, x + Math.max(0, offset), 0, overflow > 0 ? room : undefined);
+    }
+    x += slot.width;
   }
   return padTo8(out);
 }
