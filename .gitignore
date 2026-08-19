@@ -11,3 +11,7 @@ mit-catalog/
 
 # generated preview output
 examples/preview/*.png
+
+# React Native Android build artifacts
+packages/chittie-react-native/android/.gradle/
+packages/chittie-react-native/android/build/
