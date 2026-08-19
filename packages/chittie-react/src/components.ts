@@ -293,6 +293,124 @@ export const Columns = printable<ColumnsProps>((e, p, ctx) => {
   );
 });
 
+export interface TableColumn {
+  /**
+   * `undefined` — flexible: takes whatever the other columns leave (at most one
+   * column may be flexible).
+   * `'auto'` — fit the widest cell in this column, across every row.
+   * A number — exactly that many characters.
+   */
+  width?: number | 'auto';
+  align?: Alignment;
+  verticalAlign?: 'top' | 'bottom';
+  marginLeft?: number;
+  marginRight?: number;
+}
+
+export interface TableProps {
+  /** Column definitions, declared once for every row. */
+  columns: TableColumn[];
+  /** Blank characters inserted between adjacent columns. */
+  gap?: number;
+  /** One array of cells per row. A cell is any printable node or plain text. */
+  rows: ReactNode[][];
+  children?: ReactNode;
+}
+
+/**
+ * Rows sharing one set of columns. Use it wherever a receipt repeats a line
+ * shape — item lines, a totals block — so the columns are declared once and
+ * every row is aligned by construction rather than by everyone remembering the
+ * same widths.
+ *
+ * `width: 'auto'` sizes a column to its widest cell across all rows, which a
+ * single <Columns> cannot do: it only ever sees one row.
+ */
+export const Table = printable<TableProps>((e, p, ctx) => {
+  const rows = p.rows ?? [];
+  if (rows.length === 0 || p.columns.length === 0) return;
+
+  const gap = p.gap ?? 0;
+  const count = p.columns.length;
+  const texts = rows.map((row) =>
+    Array.from({ length: count }, (_, c) => clean(cellText(row[c])))
+  );
+
+  const flexible = p.columns.filter((c) => c.width === undefined);
+  if (flexible.length > 1) {
+    throw new Error('chittie: <Table> allows at most one column without a width.');
+  }
+
+  const gaps = gap * Math.max(0, count - 1);
+  const margins = p.columns.reduce((n, c) => n + (c.marginLeft ?? 0) + (c.marginRight ?? 0), 0);
+  const fixed = p.columns.reduce((n, c) => n + (typeof c.width === 'number' ? c.width : 0), 0);
+  let available = Math.max(count, ctx.columns - gaps - margins - fixed);
+
+  // 'auto' wants its widest cell; shrink them together if they don't all fit,
+  // and always leave a character for a flexible column.
+  const natural = p.columns.map((c, i) =>
+    c.width === 'auto' ? Math.max(1, ...texts.map((row) => row[i]!.length)) : 0
+  );
+  const naturalTotal = natural.reduce((n, w) => n + w, 0);
+  const roomForAuto = Math.max(0, available - (flexible.length ? 1 : 0));
+  const scale = naturalTotal > roomForAuto && naturalTotal > 0 ? roomForAuto / naturalTotal : 1;
+  const auto = natural.map((w) => (w === 0 ? 0 : Math.max(1, Math.floor(w * scale))));
+  available -= auto.reduce((n, w) => n + w, 0);
+
+  const definitions = p.columns.map((c, i) => ({
+    width:
+      typeof c.width === 'number' ? c.width : c.width === 'auto' ? auto[i]! : Math.max(1, available),
+    align: c.align ?? 'left',
+    ...(c.verticalAlign === undefined ? {} : { verticalAlign: c.verticalAlign }),
+    marginLeft: (c.marginLeft ?? 0) + (i > 0 ? gap : 0),
+    marginRight: c.marginRight ?? 0,
+  }));
+
+  // A row carrying non-Latin text becomes one image (the engine refuses an
+  // image inside a table cell). Text rows still batch into a single table()
+  // call, and the emit order follows the rows as written.
+  const perColumn = ctx.dotWidth / ctx.columns;
+  let batch: ReactNode[][] = [];
+  const flush = () => {
+    if (batch.length === 0) return;
+    e.table(
+      definitions,
+      batch.map((row) =>
+        definitions.map(
+          (definition, c) => (cellEncoder: Encoder) =>
+            walk(row[c], cellEncoder, cellContext(ctx, definition.width))
+        )
+      )
+    );
+    batch = [];
+  };
+
+  rows.forEach((row, r) => {
+    if (!texts[r]!.some((t) => needsRaster(t, ctx.codepage))) {
+      batch.push(row);
+      return;
+    }
+    flush();
+    if (!ctx.rasterizer) {
+      throw new Error(
+        'chittie: <Table> contains non-encodable text (e.g. Sinhala/Tamil/Arabic). Pass a rasterizer to render(), or use code-page text.'
+      );
+    }
+    const img = rasterizeColumns(
+      ctx.rasterizer,
+      definitions.map((definition, c) => ({
+        text: texts[r]![c]!,
+        width: Math.round(definition.width * perColumn),
+        align: definition.align,
+        marginLeft: Math.round(definition.marginLeft * perColumn),
+      })),
+      { dotWidth: ctx.dotWidth, fontSize: rasterPx(ctx.dpi), dpi: ctx.dpi, fontFamilies: ctx.fontFamilies }
+    );
+    e.image(img, img.width, img.height);
+  });
+  flush();
+});
+
 export interface BoxProps {
   /**
    * Border style. Defaults to `none` — a <Box> is a layout element here, and a

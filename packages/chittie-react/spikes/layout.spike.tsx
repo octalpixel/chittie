@@ -155,5 +155,24 @@ const show = (label: string, out: string[]) => {
   check('without a rasterizer it says so clearly', threw.includes('non-encodable'), threw);
 }
 
+/* 7. A bare string child renders — <Column>2x</Column> must not silently
+      print nothing just because it wasn't wrapped in <Text>. */
+{
+  const out = lines(
+    <Printer width={COLUMNS}>
+      <Columns gap={1}>
+        <Column width={3}>2x</Column>
+        <Column>Flat White</Column>
+        <Column width={12} align="right">Rs. 1,700.00</Column>
+      </Columns>
+      <Box marginLeft={4}>Thank you</Box>
+    </Printer>);
+  show('bare string children', out);
+  check('a bare string cell prints', out[0]!.startsWith('2x') && out[0]!.includes('Flat White'),
+    JSON.stringify(out[0]));
+  check('a bare string in a Box prints, indented', out[1] === '    Thank you'.padEnd(COLUMNS)
+    || out[1]!.startsWith('    Thank you'), JSON.stringify(out[1]));
+}
+
 console.log(failed === 0 ? '\nOK — layout elements behave' : `\n${failed} check(s) failed`);
 process.exit(failed === 0 ? 0 : 1);

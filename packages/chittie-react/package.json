@@ -1,7 +1,7 @@
 {
   "name": "@angadie/chittie-react",
   "version": "0.11.0",
-  "description": "Pure JSX receipt authoring → ESC/POS bytes. RN-safe (no react-dom, no HTML host elements). Renders onto chittie-core.",
+  "description": "Pure JSX receipt authoring \u2192 ESC/POS bytes. RN-safe (no react-dom, no HTML host elements). Renders onto chittie-core.",
   "license": "MIT",
   "type": "module",
   "types": "./dist/index.d.mts",
@@ -18,7 +18,7 @@
   "scripts": {
     "build": "tsdown",
     "typecheck": "tsc --noEmit",
-    "test": "tsx spikes/jsx.spike.tsx && tsx spikes/layout.spike.tsx"
+    "test": "tsx spikes/jsx.spike.tsx && tsx spikes/layout.spike.tsx && tsx spikes/table.spike.tsx"
   },
   "dependencies": {
     "@angadie/chittie-core": "workspace:*",

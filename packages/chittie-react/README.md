@@ -35,7 +35,8 @@ const bytes = render(
 | `<Printer>` | `width` (columns, default 48) | the root; sets line width |
 | `<Text>` | `align`, `bold`, `underline`, `invert`, `size` ({width,height} multipliers), `small`, `inline` | text (or image — see below) + newline |
 | `<Row>` | `left`, `right`, `rtl`, `gap`, `marginLeft`, `marginRight` | a two-column justified row (`rtl`: label flush-right, value flush-left) |
-| `<Columns>` | `gap` | a row of `<Column>` cells — the general form of `<Row>` |
+| `<Table>` | `columns`, `rows`, `gap` | rows sharing one set of columns; `width: 'auto'` fits a column to its content |
+| `<Columns>` | `gap` | a one-off row of `<Column>` cells |
 | `<Column>` | `width`, `align`, `verticalAlign`, `marginLeft`, `marginRight` | one cell; omit `width` on one column to take the remainder |
 | `<Box>` | `style`, `width`, `align`, `marginLeft`, `marginRight`, `paddingLeft`, `paddingRight` | an indented block, optionally bordered |
 | `<Line>` | `style` (`single`/`double`), `width` | a horizontal rule |
@@ -70,19 +71,38 @@ exactly fills the line ends up flush against the value:
 // powder
 ```
 
-**`<Columns>` — size the columns yourself.** Leave `width` off one column and
-it absorbs the remainder. Cells wrap inside their own width, so a continuation
-line stays under its column:
+**`<Table>` — repeated rows, columns declared once.** Use it wherever a receipt
+repeats a line shape. `width: 'auto'` sizes a column to its widest cell across
+every row, which `<Columns>` cannot do — it only ever sees one row:
+
+```tsx
+<Table
+  gap={1}
+  columns={[{ width: 3 }, {}, { width: 'auto', align: 'right' }]}
+  rows={items.map((it) => [`${it.qty}x`, it.name, money(it.total)])}
+/>
+// 1x  Raththi milk powder                 Rs. 120.00
+// 2x  Almond croissant with salted      Rs. 1,300.00
+//     caramel
+```
+
+Cells take plain strings or any printable node. Only one column may omit
+`width`; it absorbs the remainder. A row whose text needs rasterizing becomes a
+single image while the other rows stay as text, and the row order is preserved.
+
+**`<Columns>` — a one-off row.** Same column options, spelled as children, for
+a line that does not repeat:
 
 ```tsx
 <Columns gap={1}>
-  <Column width={3}><Text>2x</Text></Column>
-  <Column><Text>Almond croissant with salted caramel</Text></Column>
-  <Column width={12} align="right"><Text>Rs. 1,300.00</Text></Column>
+  <Column width={3}>2x</Column>
+  <Column>Flat White</Column>
+  <Column width={12} align="right">Rs. 1,700.00</Column>
 </Columns>
-// 2x  Almond croissant with     Rs. 1,300.00
-//     salted caramel
 ```
+
+A bare string child prints as its own line, so a cell needs no `<Text>` wrapper
+unless you want to style it.
 
 **`<Box>` — the only way to indent.** Leading whitespace is stripped from
 `<Text>` and `<Row>`, so spaces cannot indent anything. A box can:

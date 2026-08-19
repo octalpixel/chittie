@@ -9,7 +9,7 @@ import { writeFileSync } from 'node:fs';
 import { createCanvas, ImageData as NapiImageData } from '@napi-rs/canvas';
 import { renderReceipt } from '@angadie/chittie-preview';
 import {
-  Printer, Text, Row, Line, Columns, Column, Box, Feed, Cut, render, PRINTER_PROFILES,
+  Printer, Text, Row, Line, Columns, Column, Table, Box, Feed, Cut, render, PRINTER_PROFILES,
 } from '@angadie/chittie';
 
 (globalThis as unknown as { ImageData: unknown }).ImageData ??= NapiImageData;
@@ -35,14 +35,21 @@ const sheet = (columns: number) => (
 
     <Line />
 
-    <Text bold>Columns — qty / name / amount</Text>
-    {items.map((it, i) => (
-      <Columns key={i} gap={1}>
-        <Column width={3}><Text>{`${it.qty}x`}</Text></Column>
-        <Column><Text>{it.name}</Text></Column>
-        <Column width={12} align="right"><Text>{it.amount}</Text></Column>
-      </Columns>
-    ))}
+    <Text bold>Table — columns declared once, amount width auto</Text>
+    <Table
+      gap={1}
+      columns={[{ width: 3 }, {}, { width: 'auto', align: 'right' }]}
+      rows={items.map((it) => [`${it.qty}x`, it.name, it.amount])}
+    />
+
+    <Line />
+
+    <Text bold>Columns — one-off row</Text>
+    <Columns gap={1}>
+      <Column width={3}>2x</Column>
+      <Column>Flat White</Column>
+      <Column width={12} align="right">Rs. 1,700.00</Column>
+    </Columns>
 
     <Line />
 
