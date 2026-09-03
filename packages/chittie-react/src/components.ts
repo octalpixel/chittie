@@ -41,8 +41,6 @@ const printable = <P,>(fn: (e: Encoder, p: P, ctx: RenderContext) => void) => {
 };
 
 export interface PrinterProps {
-  /** Printer model passed to the encoder, e.g. 'epson'. */
-  type?: string;
   /** Characters per line (default 48 / 80mm). */
   width?: number;
   children?: ReactNode;
