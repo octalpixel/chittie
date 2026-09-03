@@ -31,7 +31,12 @@ export interface PreviewOptions {
   columns?: number;
   /** Pixels per character cell (default 12). */
   cellWidth?: number;
-  /** Pixels per text line (default 26). */
+  /**
+   * Default line-feed pitch in dots (default 26). This is what a LF advances by,
+   * and what `ESC 2` restores; `ESC 3 n` overrides it until the next `ESC 2`.
+   * Use 34 to model a real 203-DPI printer's 1/6-inch default — the reason a
+   * receipt is longer on paper than a 24-dot glyph height suggests.
+   */
   lineHeight?: number;
   /** Font family for text (default 'monospace'). */
   fontFamily?: string;
@@ -72,7 +77,10 @@ function parse(bytes: Uint8Array, cfg: Cfg): { ops: Op[]; height: number } {
   let lineMaxScale = 1;
   let fontB = false;
   let align: 'left' | 'center' | 'right' = 'left';
-  let suppressNextLF = false;
+  /* Current line-feed pitch in dots. A LF advances by this, not by the glyph
+     height — which is why a receipt can run long even with nothing between the
+     rows. `ESC 2` restores the printer default, `ESC 3 n` sets it to n dots. */
+  let spacing = cfg.lineHeight;
   let i = 0;
   const n = bytes.length;
   const imgX = (w: number) =>
@@ -89,7 +97,7 @@ function parse(bytes: Uint8Array, cfg: Cfg): { ops: Op[]; height: number } {
       else if (c === 0x4a) { y += bytes[i + 2] ?? 0; i += 3; } // ESC J feed dots
       else if (c === 0x64) { y += (bytes[i + 2] ?? 0) * cfg.lineHeight; i += 3; } // ESC d feed lines
       else if (c === 0x70) i += 5; // ESC p pulse
-      else if (c === 0x32) i += 2; // ESC 2 (line spacing — handled via bands)
+      else if (c === 0x32) { spacing = cfg.lineHeight; i += 2; } // ESC 2 — restore default pitch
       else if (c === 0x2a) { // ESC * column-mode image
         const m = bytes[i + 2]!;
         const cols = u16(bytes[i + 3]!, bytes[i + 4]!);
@@ -105,10 +113,12 @@ function parse(bytes: Uint8Array, cfg: Cfg): { ops: Op[]; height: number } {
           }
         }
         ops.push({ k: 'img', blacks });
-        y += bpc * 8;
-        suppressNextLF = true; // the band's trailing LF must not double-advance
+        /* The band draws bpc*8 dots but does NOT advance y itself — its trailing
+           LF does, by the pitch the encoder set for the image. Modelling it that
+           way is what makes a mis-set pitch visible here instead of only on paper. */
+        lineMaxScale = 1;
         i = start + bpc * cols;
-      } else if (c === 0x33) i += 3; // ESC 3 n
+      } else if (c === 0x33) { spacing = bytes[i + 2] ?? cfg.lineHeight; i += 3; } // ESC 3 n — pitch in dots
       else if (c === 0x4d) { fontB = bytes[i + 2] === 1; i += 3; } // ESC M n — font (0=A, 1=B)
       else if (c === 0x74 || c === 0x52 || c === 0x20 || c === 0x2d || c === 0x7b || c === 0x47) i += 3; // 1-param
       else i += 2; // unknown ESC
@@ -150,8 +160,8 @@ function parse(bytes: Uint8Array, cfg: Cfg): { ops: Op[]; height: number } {
     } else if (b === 0x1c) {
       i += bytes[i + 1] === 0x2e || bytes[i + 1] === 0x26 ? 2 : 3; // FS
     } else if (b === 0x0a) {
-      if (suppressNextLF) suppressNextLF = false;
-      else { y += cfg.lineHeight * lineMaxScale; lineMaxScale = 1; }
+      y += spacing * lineMaxScale;
+      lineMaxScale = 1;
       x = 0;
       i += 1;
     } else if (b === 0x0d) {

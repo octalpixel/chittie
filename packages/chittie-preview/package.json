@@ -18,7 +18,7 @@
   "scripts": {
     "build": "tsdown",
     "typecheck": "tsc --noEmit",
-    "test": "tsx spikes/preview.spike.ts"
+    "test": "tsx spikes/preview.spike.ts && tsx spikes/spacing.spike.ts"
   },
   "devDependencies": {
     "@angadie/chittie": "workspace:*",

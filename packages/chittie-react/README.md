@@ -33,6 +33,7 @@ const bytes = render(
 | Option | Default | What it does |
 |---|---|---|
 | `columns` | `48` | Characters per line. **Overridden by `<Printer width>`** if that is set. |
+| `lineSpacing` | printer default | Line-feed pitch in dots. **Overridden by `<Printer lineSpacing>`.** See [Vertical spacing](#vertical-spacing--how-much-paper-a-receipt-uses). |
 | `dotWidth` | `columns × 12` | Printable width in dots. Only used when rasterizing — it is the width non-Latin text and rows are laid out against. |
 | `dpi` | `203` | Printer resolution. Keeps rasterized text the same *physical* size on a 203- and a 300-DPI printer. |
 | `fontFamilies` | — | Ordered font fallback chain handed to the rasterizer, e.g. `['Noto Sans Sinhala']`. |
@@ -73,7 +74,7 @@ import covers authoring:
 
 | Component | Props | Emits |
 |---|---|---|
-| `<Printer>` | `width` (columns, default 48) | the root; sets line width |
+| `<Printer>` | `width` (columns, default 48), `lineSpacing` (line-feed pitch in dots) | the root; sets line width and paper pitch |
 | `<Text>` | `align`, `bold`, `underline` (`true` or a thickness `1`/`2`), `invert`, `size` ({width,height} multipliers), `small`, `inline` | text (or image — see below) + newline |
 | `<Row>` | `left`, `right`, `rtl`, `gap`, `marginLeft`, `marginRight` | a two-column justified row (`rtl`: label flush-right, value flush-left) |
 | `<Table>` | `columns` (**required**, `TableColumn[]`), `rows` (**required**, `ReactNode[][]`), `gap` | rows sharing one set of columns |
@@ -188,7 +189,7 @@ paper is going to one of four places, and only the first is under your control p
 | A cell **wrapped** onto a second/third line | +1 line each | column widths, `gap`, shorter text |
 | `<Br lines>` / `<Feed dots>` you wrote | 1 line / *n* dots | remove them |
 | `<Box style="single">` borders | +2 lines | `style="none"` (the default) |
-| The printer's own **line pitch** | ~1/6 in (≈34 dots @ 203 DPI) per line, vs a 24-dot glyph | none today — see below |
+| The printer's own **line pitch** | ~1/6 in (≈34 dots @ 203 DPI) per line, vs a 24-dot glyph | `<Printer lineSpacing>` |
 
 **Wrapping is almost always the answer.** A column narrower than its content silently
 becomes a two- or three-line row, and a table of 20 items pays that 20 times:
@@ -223,20 +224,46 @@ shorter*, but the printer still advances one full line — it buys horizontal ro
 length. Wrapping is decided in characters, and the column count doesn't change with the font,
 so `small` won't unwrap a row either.
 
-**Rasterized (non-Latin) rows are tighter, not looser.** A Sinhala/Tamil row prints as one
-image and advances by exactly the image height — about **3 mm** per line (scaled by `size.height`,
-and by 0.72 for `small`), with no line feed after it. That is *less* than a text line's ~1/6 in
-pitch. If a non-Latin receipt runs long, the height is coming from the `ImageData` your
-rasterizer returns: a rasterizer that bakes in generous leading, or an image padded to a
-multiple of 8 (an ESC/POS requirement), makes every line taller. Measure `img.height` before
-blaming chittie.
+**Rasterized (non-Latin) rows cost more than text rows — keep the image inside its box.**
+A Sinhala/Tamil line prints as an image, and ESC/POS sends an image as **24-dot bands**. chittie
+asks your rasterizer for a `fontSize` of about **3 mm** (24 dots at 203 DPI, scaled by
+`size.height` and by 0.72 for `small`) precisely so one line fits one band. A rasterizer that
+returns anything *taller* than the `fontSize` it was given spills into a second band, and a
+second band is a second line feed — so a 25-dot image costs twice the paper of a 24-dot one:
 
-**The one thing you cannot tune today** is the printer's default line pitch. `initialize()`
-sends `ESC @`, which resets the printer to its default ~1/6 in (≈34 dots at 203 DPI) while
-font A is only 24 dots tall — roughly 1.2 mm of leading on every single line, or ~5 cm over a
-40-line receipt. chittie exposes no line-spacing command: `<Br>` and `<Feed>` can only *add*
-space. Tightening it needs `ESC 3 n`, which is not wired up — [open an issue](../../issues) if
-you need it.
+```ts
+// ✗ ascent + descent + padding routinely exceeds 24 for Sinhala/Tamil, which have
+//   tall ascenders and deep descenders — every line silently becomes two bands.
+const h = ascent + descent + 2;
+
+// ✓ fit the glyph box to the height chittie budgeted for it.
+const h = Math.min(ascent + descent + 2, fontSize);
+```
+
+If a non-Latin receipt runs long, log `img.height` from your rasterizer first — anything over
+`options.fontSize` is doubling your paper. Note also that each image is followed by one line
+feed of its own, so a fully rasterized receipt still benefits from `lineSpacing` even though
+the glyphs themselves are images.
+
+**`<Printer lineSpacing>` — the setting that shortens every line at once.** `initialize()`
+sends `ESC @`, which leaves the printer on its own default pitch of ~1/6 in (≈34 dots at
+203 DPI) while font A is only 24 dots tall. That is ~10 dots of leading on *every* line that
+no layout asks for. Set the pitch in dots and it applies to the whole receipt:
+
+```tsx
+<Printer width={48} lineSpacing={24}>   {/* 24 = flush against a font-A glyph */}
+```
+
+Measured on a 5-item receipt at 48 columns (`packages/chittie-preview/spikes/spacing.spike.ts`):
+
+| | default pitch | `lineSpacing={24}` |
+|---|---|---|
+| Latin receipt | 52.8 mm | **37.8 mm** (−28%) |
+| Sinhala receipt (every line rasterized) | 54.1 mm | **37.8 mm** (−30%) |
+
+Below about 22 dots consecutive lines start to touch; 24 is flush, 26–28 stays comfortable.
+Double-height text (`size={{ height: 2 }}`) still advances two pitches, so it is not clipped.
+`render({ lineSpacing })` sets the same thing, and `<Printer lineSpacing>` wins over it.
 
 ### `<Image>` — logos and bitmaps
 

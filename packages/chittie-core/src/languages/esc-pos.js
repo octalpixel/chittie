@@ -478,7 +478,10 @@ class LanguageEscPos {
           {
             type: 'line-spacing',
             value: '24 dots',
-            payload: [0x1b, 0x33, 0x24],
+            /* Each ESC * band is exactly 24 dots tall (getColumnData slices by
+               24), so the LF that terminates it must advance 24. 0x24 is 36 —
+               it fed 12 blank dots between every band of every image. */
+            payload: [0x1b, 0x33, 24],
           },
       );
 

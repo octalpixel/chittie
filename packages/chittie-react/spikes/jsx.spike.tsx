@@ -186,3 +186,28 @@ assert.throws(
 const fragText = render(<Printer width={32}><Text>{'XY'}</Text></Printer>);
 assert.ok(ascii(fragText).includes('XY'), 'string children still render');
 console.log('✓ <Text> rejects component children (no silent drop); strings/fragments still render');
+
+// --- <Printer lineSpacing>: the line-feed pitch that decides paper length ---
+const ESC_3 = (n: number) => [0x1b, 0x33, n];
+assert.ok(
+  !contains(render(<Printer width={32}><Text>hi</Text></Printer>), [0x1b, 0x33]),
+  'no lineSpacing → no ESC 3, the printer keeps its own default pitch'
+);
+assert.ok(
+  contains(render(<Printer width={32} lineSpacing={24}><Text>hi</Text></Printer>), ESC_3(24)),
+  '<Printer lineSpacing> emits ESC 3 n'
+);
+assert.ok(
+  contains(render(<Printer width={32}><Text>hi</Text></Printer>, { lineSpacing: 30 }), ESC_3(30)),
+  'render({ lineSpacing }) emits ESC 3 n'
+);
+assert.ok(
+  contains(render(<Printer width={32} lineSpacing={24}><Text>hi</Text></Printer>, { lineSpacing: 30 }), ESC_3(24)),
+  '<Printer lineSpacing> wins over the render() option'
+);
+assert.throws(
+  () => render(<Printer width={32} lineSpacing={999}><Text>hi</Text></Printer>),
+  /between 0 and 255/,
+  'an out-of-range pitch throws rather than emitting a truncated byte'
+);
+console.log('✓ <Printer lineSpacing> → ESC 3 n, prop beats option, out-of-range throws');

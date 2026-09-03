@@ -150,6 +150,7 @@ class ReceiptPrinterEncoder {
   #state = {
     'codepage': 0,
     'font': 'A',
+    'lineSpacing': null,
   };
 
 
@@ -293,6 +294,7 @@ class ReceiptPrinterEncoder {
     this.#codepage = this.#options.language == 'esc-pos' ? 'cp437' : 'star/standard';
     this.#state.codepage = -1;
     this.#state.font = 'A';
+    this.#state.lineSpacing = null;
   }
 
   /**
@@ -531,6 +533,37 @@ class ReceiptPrinterEncoder {
 
     this.width(width);
     this.height(height);
+
+    return this;
+  }
+
+  /**
+     * Set the line-feed pitch — how far the paper advances on each newline
+     *
+     * The printer's own default is 1/6 inch (about 34 dots at 203 DPI) while
+     * font A is only 24 dots tall, so every line carries ~10 dots of leading
+     * that nothing in the layout accounts for. Pass a dot count to tighten it,
+     * or null to hand the printer back its default.
+     *
+     * @param  {number|null}     dots    Pitch in dots (0-255), or null for the printer default
+     * @return {ReceiptPrinterEncoder}                  Return the object, for easy chaining commands
+     *
+     */
+  lineSpacing(dots) {
+    if (this.#options.embedded) {
+      throw new Error('Line spacing is not supported in table cells or boxes');
+    }
+
+    if (this.#options.language !== 'esc-pos') {
+      throw new Error('Line spacing is only supported for ESC/POS printers');
+    }
+
+    if (dots !== null && (!Number.isInteger(dots) || dots < 0 || dots > 255)) {
+      throw new Error('Line spacing must be a whole number of dots between 0 and 255, or null for the printer default');
+    }
+
+    this.#state.lineSpacing = dots;
+    this.#composer.raw(dots === null ? [0x1b, 0x32] : [0x1b, 0x33, dots]);
 
     return this;
   }
@@ -1183,6 +1216,14 @@ class ReceiptPrinterEncoder {
     this.#composer.add(
         this.#language.image(image, width, height, this.#options.imageMode),
     );
+
+    /* A column-mode image sets its own band pitch and then restores the
+       PRINTER default, which would silently undo lineSpacing() from the first
+       image onwards — on a non-Latin receipt that is every single line. */
+
+    if (this.#options.imageMode === 'column' && this.#state.lineSpacing !== null) {
+      this.#composer.raw([0x1b, 0x33, this.#state.lineSpacing]);
+    }
 
     /* Reset alignment */
 

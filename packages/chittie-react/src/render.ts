@@ -25,6 +25,8 @@ function resolveRoot(element: ReactElement): ReactElement {
 export interface RenderOptions {
   /** Characters per line; overridden by <Printer width>. */
   columns?: number;
+  /** Line-feed pitch in dots; overridden by <Printer lineSpacing>. See PrinterProps. */
+  lineSpacing?: number;
   /** Printable width in dots; defaults to columns × 12 (203 DPI, font A). */
   dotWidth?: number;
   /** Printer resolution (203/300) — keeps rasterized text the same physical size across printers. */
@@ -51,12 +53,14 @@ export const PRINTER_PROFILES = {
  */
 export function render(element: ReactElement, options: RenderOptions = {}): Uint8Array {
   const root = resolveRoot(element);
-  const props = (root.props ?? {}) as { width?: number; children?: ReactNode };
+  const props = (root.props ?? {}) as { width?: number; lineSpacing?: number; children?: ReactNode };
   const columns = props.width ?? options.columns ?? 48;
   const dotWidth = options.dotWidth ?? columns * 12;
   const dpi = options.dpi ?? 203;
+  const lineSpacing = props.lineSpacing ?? options.lineSpacing;
   const encoder = new ReceiptPrinterEncoder({ columns });
   encoder.initialize();
+  if (lineSpacing !== undefined) encoder.lineSpacing(lineSpacing);
   walk(props.children, encoder, {
     columns,
     dotWidth,

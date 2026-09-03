@@ -43,6 +43,13 @@ const printable = <P,>(fn: (e: Encoder, p: P, ctx: RenderContext) => void) => {
 export interface PrinterProps {
   /** Characters per line (default 48 / 80mm). */
   width?: number;
+  /**
+   * Line-feed pitch in dots — how far the paper advances per line. The printer
+   * defaults to 1/6 inch (~34 dots at 203 DPI) while font A is 24 dots tall,
+   * so leaving it unset spends ~10 dots of blank paper on every line. 24 is
+   * flush; below ~22 lines start to touch.
+   */
+  lineSpacing?: number;
   children?: ReactNode;
 }
 /** Root element — render() reads its props; it has no print() of its own. */
