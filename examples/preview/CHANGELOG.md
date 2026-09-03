@@ -1,5 +1,14 @@
 # @angadie/example-preview
 
+## 0.0.16
+
+### Patch Changes
+
+- Updated dependencies [6f1fa0d]
+  - @angadie/chittie-preview@0.8.0
+  - @angadie/chittie@0.5.10
+  - @angadie/chittie-text@0.9.0
+
 ## 0.0.15
 
 ### Patch Changes
