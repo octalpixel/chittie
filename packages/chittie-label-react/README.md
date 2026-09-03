@@ -43,14 +43,32 @@ const PriceTag = ({ p }: { p: Product }) => (
 
 | element | props | → |
 |---|---|---|
-| `<Label profile rasterizer? print?>` | root: `profile` (mm/dpi/gap/density…), optional `rasterizer`, `print={{sets,copies}}` | TSPL job |
-| `<LText x y font? rotation? xMul? yMul?>` | text (children) | `TEXT` (non-Latin → raster) |
-| `<LBarcode x y data type? height? human? narrow? wide?>` | 1D barcode | `BARCODE` |
-| `<LQR x y data ecc? cell?>` | QR | `QRCODE` |
-| `<LBox x y w h thickness?>` | outline | `BOX` |
-| `<LBar x y w h>` | filled bar | `BAR` |
-| `<LImage x y image mode? threshold?>` | `ImageData` | `BITMAP` |
+| `<Label>` | **`profile`** (required — mm/dpi/gap/density…), `rasterizer?`, `print?={{ sets?, copies? }}` | TSPL job |
+| `<LText>` | **`x`**, **`y`**, `font?`, `rotation?`, `xMul?`, `yMul?`, `rasterFontSize?` + text children | `TEXT` (non-Latin → raster) |
+| `<LBarcode>` | **`x`**, **`y`**, **`data`** (string \| number), `type?`, `height?`, `human?` (`0`\|`1`\|`2`), `rotation?`, `narrow?`, `wide?` | `BARCODE` |
+| `<LQR>` | **`x`**, **`y`**, **`data`**, `ecc?` (`L`\|`M`\|`Q`\|`H`), `cell?`, `rotation?` | `QRCODE` |
+| `<LBox>` | **`x`**, **`y`**, **`w`**, **`h`**, `thickness?` | `BOX` |
+| `<LBar>` | **`x`**, **`y`**, **`w`**, **`h`** | `BAR` |
+| `<LImage>` | **`x`**, **`y`**, **`image`** (`ImageData`), `mode?` (`0`\|`1`\|`2`), `threshold?` | `BITMAP` |
+
+Bold props are required. `rotation` is `0 | 90 | 180 | 270` on every element that takes it.
+`<Label>` throws without a `profile`; `render(element)` takes no options — everything is
+declared on `<Label>`.
 
 Coordinates are in **dots** (`mmToDots(mm, dpi)` to convert). Non-Latin `<LText>`
-rasterizes via the `<Label rasterizer={…}>` (or throws — never a silent `?`).
+rasterizes via the `<Label rasterizer={…}>` (or throws — never a silent `?`), at
+`rasterFontSize` dots when you need a size other than the default.
+Also re-exported: `LABEL_PROFILES`, `mmToDots`, and `toText`.
 See `@angadie/chittie-label` for the underlying builder, barcode types, and profiles.
+
+## Spacing
+
+A label is a **coordinate canvas**, not a flowing page: nothing wraps, nothing pushes
+anything down, and `x`/`y` in dots is the only spacing control. Two elements overlap if
+you give them overlapping coordinates — line height is yours to budget. Contrast this with
+receipts (`@angadie/chittie-react`), where rows flow and wrapping is what costs paper.
+
+Label *stock* length is fixed by the `profile` (`LABEL_PROFILES['40x30']` etc.), so a label
+never runs long — content placed past the bottom edge falls outside the printed area. Convert with
+`mmToDots(mm, dpi)` rather than hardcoding dots, or a layout tuned on a 203-DPI printer
+lands at two-thirds scale on a 300-DPI one.
