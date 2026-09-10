@@ -16,6 +16,15 @@ export interface PreviewContext2D {
   moveTo(x: number, y: number): void;
   lineTo(x: number, y: number): void;
   stroke(): void;
+  /**
+   * Optional, but needed to draw magnified text truthfully. ESC/POS scales a
+   * character's width and height independently, and a canvas font size cannot —
+   * so a double-height row is drawn under a horizontal transform. Without these
+   * the preview falls back to square scaling, which draws such a row condensed.
+   */
+  save?(): void;
+  restore?(): void;
+  scale?(x: number, y: number): void;
 }
 
 export interface PreviewCanvas {
@@ -56,7 +65,7 @@ const FONT_B_SCALE = 0.72;
 const FONT_A_HEIGHT = 24;
 
 type Op =
-  | { k: 'ch'; x: number; y: number; c: string; bold: boolean; scale: number; fontB: boolean }
+  | { k: 'ch'; x: number; y: number; c: string; bold: boolean; scale: number; wScale: number; fontB: boolean }
   | { k: 'img'; blacks: Array<[number, number]> }
   | { k: 'cut'; y: number }
   | { k: 'box'; x: number; y: number; w: number; h: number; label: string };
@@ -174,7 +183,7 @@ function parse(bytes: Uint8Array, cfg: Cfg): { ops: Op[]; height: number } {
       i += 1;
     } else {
       const ch = decode(b);
-      if (ch && ch !== ' ') ops.push({ k: 'ch', x, y, c: ch, bold, scale: hScale, fontB });
+      if (ch && ch !== ' ') ops.push({ k: 'ch', x, y, c: ch, bold, scale: hScale, wScale, fontB });
       if (hScale > lineMaxScale) lineMaxScale = hScale;
       x += cfg.cellWidth * wScale * (fontB ? FONT_B_SCALE : 1);
       i += 1;
@@ -206,7 +215,19 @@ export function renderReceipt(bytes: Uint8Array, options: PreviewOptions): Previ
     if (op.k === 'ch') {
       ctx.fillStyle = '#000';
       ctx.font = `${op.bold ? 'bold ' : ''}${(op.fontB ? 18 * FONT_B_SCALE : 18) * op.scale}px ${fontFamily}`;
-      ctx.fillText(op.c, cfg.padding + op.x, op.y);
+      /* A font size scales both axes at once, so a row magnified in only one of
+         them (a double-height total) would draw as wide as it is tall and run
+         into its neighbour. Squeeze the other axis back under a transform. */
+      const squeeze = op.wScale / op.scale;
+      const canTransform = squeeze !== 1 && ctx.save && ctx.restore && ctx.scale;
+      if (canTransform) {
+        ctx.save!();
+        ctx.scale!(squeeze, 1);
+        ctx.fillText(op.c, (cfg.padding + op.x) / squeeze, op.y);
+        ctx.restore!();
+      } else {
+        ctx.fillText(op.c, cfg.padding + op.x, op.y);
+      }
     } else if (op.k === 'img') {
       ctx.fillStyle = '#000';
       for (const [px, py] of op.blacks) ctx.fillRect(cfg.padding + px, py, 1, 1);
