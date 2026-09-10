@@ -1,5 +1,13 @@
 # @angadie/chittie-react
 
+## 0.14.1
+
+### Patch Changes
+
+- Updated dependencies [3887745]
+  - @angadie/chittie-core@0.6.2
+  - @angadie/chittie-text@0.9.0
+
 ## 0.14.0
 
 ### Minor Changes

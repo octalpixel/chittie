@@ -1,5 +1,11 @@
 # @angadie/example-web
 
+## 0.0.17
+
+### Patch Changes
+
+- @angadie/chittie@0.5.12
+
 ## 0.0.16
 
 ### Patch Changes
