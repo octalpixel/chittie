@@ -91,6 +91,7 @@ declare class ReceiptPrinterEncoder {
     size(width: number, height?: number | undefined): ReceiptPrinterEncoder;
     size(value: TextSize): ReceiptPrinterEncoder;
     font(value: string): ReceiptPrinterEncoder;
+    lineSpacing(dots: number | null): ReceiptPrinterEncoder;
     align(value: Alignment): ReceiptPrinterEncoder;
     table(columns: TableColumn[], data: TableCellContent[][]): ReceiptPrinterEncoder;
     rule(options?: RuleOptions): ReceiptPrinterEncoder;
