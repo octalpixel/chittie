@@ -211,3 +211,18 @@ assert.throws(
   'an out-of-range pitch throws rather than emitting a truncated byte'
 );
 console.log('✓ <Printer lineSpacing> → ESC 3 n, prop beats option, out-of-range throws');
+
+// --- <Row height>: the one row that has to outweigh the rest ---
+const GS_SIZE = (n: number) => [0x1d, 0x21, n];
+const tallRow = render(
+  <Printer width={32}><Row height={2} left="TOTAL" right="Rs. 600.00" /></Printer>
+);
+assert.ok(contains(tallRow, GS_SIZE(0x01)), '<Row height={2}> magnifies the row vertically');
+assert.ok(contains(tallRow, GS_SIZE(0x00)), 'and hands the size back afterwards');
+assert.ok(ascii(tallRow).includes('TOTAL'), 'the row still carries its text');
+// Height only: a cell measures its text at 1x, so a widened row would no longer
+// add up to the paper. The padding between the cells must be identical.
+const plainRow = render(<Printer width={32}><Row left="TOTAL" right="Rs. 600.00" /></Printer>);
+const cellGap = (bytes: Uint8Array) => /TOTAL( +)Rs\./.exec(ascii(bytes))?.[1].length;
+assert.equal(cellGap(tallRow), cellGap(plainRow), 'magnifying a row does not change its column math');
+console.log('✓ <Row height> → GS ! vertical magnification, columns unchanged');

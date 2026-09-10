@@ -51,6 +51,9 @@ const decode = (b: number): string => (b < 0x80 ? String.fromCharCode(b) : (CP43
 
 // ESC/POS Font B is ~9×17 vs Font A 12×24 — roughly 0.72× on screen.
 const FONT_B_SCALE = 0.72;
+// Font A's character height in dots — what a line feeds when it is taller than
+// the pitch. Font B is shorter, so the pitch wins there and this stays the bound.
+const FONT_A_HEIGHT = 24;
 
 type Op =
   | { k: 'ch'; x: number; y: number; c: string; bold: boolean; scale: number; fontB: boolean }
@@ -160,7 +163,10 @@ function parse(bytes: Uint8Array, cfg: Cfg): { ops: Op[]; height: number } {
     } else if (b === 0x1c) {
       i += bytes[i + 1] === 0x2e || bytes[i + 1] === 0x26 ? 2 : 3; // FS
     } else if (b === 0x0a) {
-      y += spacing * lineMaxScale;
+      /* Epson's ESC 3 reference: a line whose characters are taller than the
+         pitch feeds the character height instead, so a magnified row is never
+         clipped — and never costs pitch x scale either. */
+      y += Math.max(spacing, FONT_A_HEIGHT * lineMaxScale);
       lineMaxScale = 1;
       x = 0;
       i += 1;

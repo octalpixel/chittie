@@ -189,7 +189,7 @@ paper is going to one of four places, and only the first is under your control p
 | A cell **wrapped** onto a second/third line | +1 line each | column widths, `gap`, shorter text |
 | `<Br lines>` / `<Feed dots>` you wrote | 1 line / *n* dots | remove them |
 | `<Box style="single">` borders | +2 lines | `style="none"` (the default) |
-| The printer's own **line pitch** | ~1/6 in (≈34 dots @ 203 DPI) per line, vs a 24-dot glyph | `<Printer lineSpacing>` |
+| The printer's own **line pitch** | 30 dots @ 203 DPI per line, vs a 24-dot glyph | `<Printer lineSpacing>` |
 
 **Wrapping is almost always the answer.** A column narrower than its content silently
 becomes a two- or three-line row, and a table of 20 items pays that 20 times:
@@ -246,8 +246,8 @@ feed of its own, so a fully rasterized receipt still benefits from `lineSpacing`
 the glyphs themselves are images.
 
 **`<Printer lineSpacing>` — the setting that shortens every line at once.** `initialize()`
-sends `ESC @`, which leaves the printer on its own default pitch of ~1/6 in (≈34 dots at
-203 DPI) while font A is only 24 dots tall. That is ~10 dots of leading on *every* line that
+sends `ESC @`, which leaves the printer on its own default pitch — 30 dots on a 203-DPI TM
+printer — while font A is only 24 dots tall. That is 6 dots of leading on *every* line that
 no layout asks for. Set the pitch in dots and it applies to the whole receipt:
 
 ```tsx

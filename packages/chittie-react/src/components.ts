@@ -44,10 +44,11 @@ export interface PrinterProps {
   /** Characters per line (default 48 / 80mm). */
   width?: number;
   /**
-   * Line-feed pitch in dots — how far the paper advances per line. The printer
-   * defaults to 1/6 inch (~34 dots at 203 DPI) while font A is 24 dots tall,
-   * so leaving it unset spends ~10 dots of blank paper on every line. 24 is
-   * flush; below ~22 lines start to touch.
+   * Line-feed pitch in dots — how far the paper advances per line. A 203-DPI
+   * TM printer defaults to 30 dots while font A is 24 dots tall, so leaving it
+   * unset spends 6 dots of blank paper on every line. 24 is flush; below ~22
+   * lines start to touch. A line taller than the pitch still feeds its own
+   * character height, so a magnified row is never clipped.
    */
   lineSpacing?: number;
   children?: ReactNode;
@@ -113,6 +114,13 @@ export interface RowProps {
    * Ignored on a rasterized (non-Latin) row, which lays itself out in dots.
    */
   gap?: number;
+  /**
+   * Character height multiplier (2 = double height) — for the one row that has
+   * to outweigh the rest, typically the total. Width magnification is not
+   * offered: a cell measures its text at 1x while the printer would print it
+   * wider, so the columns would no longer add up to the paper.
+   */
+  height?: number;
   marginLeft?: number;
   marginRight?: number;
   children?: ReactNode;
@@ -130,7 +138,7 @@ export const Row = printable<RowProps>((e, p, ctx) => {
     }
     const img = rasterizeRow(ctx.rasterizer, left, right, {
       dotWidth: ctx.dotWidth,
-      fontSize: rasterPx(ctx.dpi),
+      fontSize: rasterPx(ctx.dpi, p.height ?? 1),
       dpi: ctx.dpi,
       fontFamilies: ctx.fontFamilies,
       rtl: p.rtl,
@@ -147,6 +155,7 @@ export const Row = printable<RowProps>((e, p, ctx) => {
   const usable = Math.max(1, ctx.columns - marginLeft - marginRight - gap);
   const trailW = Math.min(trail.length, usable);
   const leadW = Math.max(0, usable - trailW);
+  if (p.height) e.height(p.height);
   e.table(
     [
       { width: leadW, align: 'left', marginLeft },
@@ -154,6 +163,7 @@ export const Row = printable<RowProps>((e, p, ctx) => {
     ],
     [[lead, trail]]
   );
+  if (p.height) e.height(1);
 });
 
 export interface LineProps {

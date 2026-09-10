@@ -540,10 +540,13 @@ class ReceiptPrinterEncoder {
   /**
      * Set the line-feed pitch — how far the paper advances on each newline
      *
-     * The printer's own default is 1/6 inch (about 34 dots at 203 DPI) while
-     * font A is only 24 dots tall, so every line carries ~10 dots of leading
-     * that nothing in the layout accounts for. Pass a dot count to tighten it,
-     * or null to hand the printer back its default.
+     * The printer's own default is 30 dots on a 203-DPI TM printer (Epson's
+     * ESC 3 reference) while font A is only 24 dots tall, so every line carries
+     * 6 dots of leading that nothing in the layout accounts for. Pass a dot
+     * count to tighten it, or null to hand the printer back its default.
+     *
+     * A line taller than the pitch is safe: the printer feeds the character
+     * height instead, so an emphasised double-height row is never clipped.
      *
      * @param  {number|null}     dots    Pitch in dots (0-255), or null for the printer default
      * @return {ReceiptPrinterEncoder}                  Return the object, for easy chaining commands

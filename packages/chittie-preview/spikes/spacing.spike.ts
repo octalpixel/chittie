@@ -3,7 +3,7 @@
  *
  * The preview models the line-feed pitch (ESC 2 / ESC 3 n), so it — not a
  * character count — answers "why is this receipt so long". Measured at a
- * pitch of 34 dots: a real 203-DPI printer's 1/6-inch default.
+ * pitch of 30 dots: the default an Epson 203-DPI TM printer powers up with.
  *
  * Two shapes are measured, because they run long for different reasons:
  *   - a Latin receipt, where every line pays the printer's default pitch;
@@ -17,7 +17,7 @@ import ImageData from '@canvas/image-data';
 import { renderReceipt, type PreviewContext2D } from '../src/index.js';
 
 const DPI = 203;
-const PITCH = 34; // 1/6 inch at 203 DPI — the ESC/POS default a bare LF advances by
+const PITCH = 30; // Epson ESC 3 reference: the default a 203-DPI TM printer advances by
 const COLUMNS = 48;
 const GLYPH = 24; // font A height, and the height chittie-react rasterizes to at 203 DPI
 const mm = (dots: number) => dots / (DPI / 25.4);
@@ -81,6 +81,22 @@ function sinhala(lineSpacing?: number): Uint8Array {
   return e.encode();
 }
 
+/**
+ * One magnified row, the shape of an emphasised TOTAL. A tall line is `height`
+ * times the 24-dot font, so a tight pitch has to widen just for that line —
+ * otherwise the next line prints over the bottom of it.
+ */
+function totalRow(height: number): Uint8Array {
+  const e = encoder(GLYPH);
+  e.line('Subtotal');
+  e.height(height);
+  e.table([{ width: 34, align: 'left' }, { width: 14, align: 'right' }], [['TOTAL', 'Rs. 46,600.00']]);
+  e.height(1);
+  e.line('Payment');
+  e.cut();
+  return e.encode();
+}
+
 const supportsLineSpacing = typeof (new ReceiptPrinterEncoder({ columns: COLUMNS }) as unknown as {
   lineSpacing?: unknown;
 }).lineSpacing === 'function';
@@ -109,5 +125,13 @@ console.log(`\n  Sinhala: ${sinhalaDots} dots for ${ITEMS.length} lines of ${GLY
 assert.ok(sinhalaDots > 0, 'receipt measured');
 if (supportsLineSpacing) {
   assert.ok(rows[2]![1] < rows[0]![1], 'lineSpacing(24) shortens a Latin receipt');
+
+  /* Epson's ESC 3 reference: a line taller than the pitch feeds the character
+     height. At a 24-dot pitch a double-height row therefore costs exactly one
+     extra glyph — it is never clipped, and never costs more than it draws. */
+  const plain = paperDots(totalRow(1));
+  const tall = paperDots(totalRow(2));
+  console.log(`  double-height total costs ${tall - plain} extra dots (one ${GLYPH}-dot line)`);
+  assert.equal(tall - plain, GLYPH, 'a double-height row feeds its own height, no more');
 }
 console.log('\nok  spacing measured');
