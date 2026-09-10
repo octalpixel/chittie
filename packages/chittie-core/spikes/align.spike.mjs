@@ -61,5 +61,34 @@ const check = (label, ok, detail) => {
   check('left align emits no leading pad', padBefore(s, LINE) === 0);
 }
 
+// Magnified text: padding is printed as characters but measured in cells, and a
+// double-width character covers two. A centred name must not drift right by its
+// own magnification — the bug an emphasised receipt header exposed.
+{
+  const NAME = 'ABCDEFGH'; // 8 chars = 16 cells at double width, in 32 columns
+  const bytes = new ReceiptPrinterEncoder({columns: COLUMNS})
+      .initialize().align('center').size(2, 2).line(NAME).encode();
+  const pad = padBefore(dump(bytes), NAME);
+  check('double-width centre pad', pad === 4, `pad=${pad} chars (=${pad * 2} cells) expected 4`);
+}
+
+// Double height alone changes no width, so the padding must not move.
+{
+  const NAME = 'ABCDEFGH';
+  const tall = padBefore(dump(new ReceiptPrinterEncoder({columns: COLUMNS})
+      .initialize().align('center').size(1, 2).line(NAME).encode()), NAME);
+  const plain = padBefore(dump(new ReceiptPrinterEncoder({columns: COLUMNS})
+      .initialize().align('center').line(NAME).encode()), NAME);
+  check('double-height centre pad is unchanged', tall === plain, `${tall} vs ${plain}`);
+}
+
+// Right alignment fills the same gap, so it divides the same way.
+{
+  const NAME = 'ABCDEFGH';
+  const pad = padBefore(dump(new ReceiptPrinterEncoder({columns: COLUMNS})
+      .initialize().align('right').size(2, 2).line(NAME).encode()), NAME);
+  check('double-width right pad', pad === 8, `pad=${pad} chars (=${pad * 2} cells) expected 8`);
+}
+
 console.log(failed === 0 ? '\nOK — alignment padding follows the font' : `\n${failed} check(s) failed`);
 process.exit(failed === 0 ? 0 : 1);

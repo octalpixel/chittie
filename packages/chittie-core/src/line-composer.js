@@ -217,7 +217,7 @@ class LineComposer {
         result = this.#merge([
           ...this.#stored,
           ...lead,
-          {type: 'space', size: this.#columns - this.#cursor},
+          this.#pad(this.#columns - this.#cursor),
           ...body,
           ...store,
         ]);
@@ -229,10 +229,10 @@ class LineComposer {
         result = this.#merge([
           ...this.#stored,
           ...lead,
-          {type: 'space', size: left},
+          this.#pad(left),
           ...body,
           ...store,
-          {type: 'space', size: this.#embedded ? this.#columns - this.#cursor - left : 0},
+          this.#pad(this.#embedded ? this.#columns - this.#cursor - left : 0),
         ]);
       }
 
@@ -241,7 +241,7 @@ class LineComposer {
           ...this.#stored,
           ...buffer,
           ...store,
-          {type: 'space', size: this.#embedded ? this.#columns - this.#cursor : 0},
+          this.#pad(this.#embedded ? this.#columns - this.#cursor : 0),
         ]);
       }
     }
@@ -278,6 +278,21 @@ class LineComposer {
     if (result.length) {
       this.#callback(result);
     }
+  }
+
+  /**
+     * Alignment padding, as a count of space CHARACTERS
+     *
+     * The gap to fill is measured in cells, but it is printed as characters —
+     * and a magnified character covers `style.width` cells. Emitting the cell
+     * count verbatim made a centred double-width line pad twice as far as it
+     * meant to, pushing it flush against the right edge instead of centring it.
+     *
+     * @param  {number}   cells   The gap to fill, in cells
+     * @return {object}           A space item sized in characters
+     */
+  #pad(cells) {
+    return {type: 'space', size: Math.max(0, Math.floor(cells / this.style.width))};
   }
 
   /**
