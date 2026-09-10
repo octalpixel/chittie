@@ -1,5 +1,13 @@
 # @angadie/example-playground
 
+## 0.0.14
+
+### Patch Changes
+
+- Updated dependencies [f91f959]
+  - @angadie/chittie-preview@0.8.1
+  - @angadie/chittie@0.5.11
+
 ## 0.0.13
 
 ### Patch Changes
