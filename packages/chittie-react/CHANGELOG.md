@@ -1,5 +1,13 @@
 # @angadie/chittie-react
 
+## 0.16.0
+
+### Minor Changes
+
+- Let `<Barcode>` centre itself and print its value.
+
+  The encoder already emits `ESC a` around a barcode and `GS H` for the human-readable value, but the component only passed a height, so a barcode always printed flush left with no digits under it — while receipts almost always want it centred with the invoice number below. `<Barcode align="center" text />` now does that. A barcode without the new props prints exactly as before.
+
 ## 0.15.0
 
 ### Minor Changes
