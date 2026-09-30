@@ -1,5 +1,12 @@
 # @angadie/example-playground
 
+## 0.0.17
+
+### Patch Changes
+
+- @angadie/chittie@0.5.13
+- @angadie/chittie-preview@0.9.0
+
 ## 0.0.16
 
 ### Patch Changes

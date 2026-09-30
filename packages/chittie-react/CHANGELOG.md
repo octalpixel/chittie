@@ -1,5 +1,13 @@
 # @angadie/chittie-react
 
+## 0.15.0
+
+### Minor Changes
+
+- Let `render()` choose the line ending.
+
+  Every printed line ends with the core encoder's Epson-style `LF CR`, and `render()` had no way to change it. Many USB clones (the N32G43x among them) treat that CR as a second line feed, so every line of a receipt printed double-spaced, and callers were stripping CR bytes out of the rendered output themselves — which is unsafe, because image and barcode payloads can contain `0A 0D`. `render(element, { newline: '\n' })` now sends a bare LF. The default is unchanged.
+
 ## 0.14.1
 
 ### Patch Changes
