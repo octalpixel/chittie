@@ -510,10 +510,16 @@ export interface BarcodeProps {
   value: string;
   symbology?: BarcodeSymbology | number;
   height?: number;
+  /** Horizontal position of the barcode on the paper. Defaults to left. */
+  align?: Alignment;
+  /** Print the value in human-readable digits below the bars (ESC/POS GS H 2). */
+  text?: boolean;
   children?: ReactNode;
 }
 export const Barcode = printable<BarcodeProps>((e, p) => {
-  e.barcode(p.value, p.symbology ?? 'code128', p.height);
+  if (p.align) e.align(p.align);
+  e.barcode(p.value, p.symbology ?? 'code128', { height: p.height ?? 60, text: p.text ?? false });
+  if (p.align) e.align('left');
 });
 
 export interface QRCodeProps {

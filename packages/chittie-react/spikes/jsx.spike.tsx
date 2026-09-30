@@ -244,3 +244,20 @@ assert.ok(!hasCrAfterLf(lfOnly), "newline: '\\n' emits no CR after a line feed")
 const lineFeeds = (bytes: Uint8Array) => ascii(bytes).match(/\n/g)?.length;
 assert.equal(lineFeeds(lfOnly), lineFeeds(render(twoLines)), 'same number of line feeds');
 console.log("✓ render({ newline: '\\n' }) → LF-only line endings, default unchanged");
+
+// --- <Barcode align text>: a centred barcode with its value printed below ---
+// The encoder already emits ESC a around a barcode and GS H for the value; the
+// component had no way to ask for either.
+const plainCode = render(<Printer width={32}><Barcode value="INV-1001" /></Printer>);
+assert.ok(!contains(plainCode, [0x1b, 0x61, 0x01]), 'a plain barcode is not centred');
+assert.ok(contains(plainCode, [0x1d, 0x48, 0x00]), 'and prints no value below');
+const centred = render(
+  <Printer width={32}><Barcode value="INV-1001" align="center" text /></Printer>
+);
+const barcodeAt = (bytes: Uint8Array) =>
+  Array.from(bytes).findIndex((b, i, arr) => b === 0x1d && arr[i + 1] === 0x6b);
+const centreAt = (bytes: Uint8Array) =>
+  Array.from(bytes).findIndex((b, i, arr) => b === 0x1b && arr[i + 1] === 0x61 && arr[i + 2] === 0x01);
+assert.ok(centreAt(centred) !== -1 && centreAt(centred) < barcodeAt(centred), 'align="center" centres it');
+assert.ok(contains(centred, [0x1d, 0x48, 0x02]), 'text prints the value below the bars');
+console.log('✓ <Barcode align text> → ESC a 1 before GS k, GS H 2');
