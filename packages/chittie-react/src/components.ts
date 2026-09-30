@@ -514,11 +514,20 @@ export interface BarcodeProps {
   align?: Alignment;
   /** Print the value in human-readable digits below the bars (ESC/POS GS H 2). */
   text?: boolean;
+  /**
+   * Bar (module) width, 1–3 on the encoder's scale (GS w 2–4); default 2. Use 1
+   * on a 58mm roll: a 10-character CODE128 at the default is wider than 384 dots.
+   */
+  width?: 1 | 2 | 3;
   children?: ReactNode;
 }
 export const Barcode = printable<BarcodeProps>((e, p) => {
   if (p.align) e.align(p.align);
-  e.barcode(p.value, p.symbology ?? 'code128', { height: p.height ?? 60, text: p.text ?? false });
+  e.barcode(p.value, p.symbology ?? 'code128', {
+    height: p.height ?? 60,
+    width: p.width ?? 2,
+    text: p.text ?? false,
+  });
   if (p.align) e.align('left');
 });
 

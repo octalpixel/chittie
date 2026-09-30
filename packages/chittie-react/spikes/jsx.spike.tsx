@@ -261,3 +261,11 @@ const centreAt = (bytes: Uint8Array) =>
 assert.ok(centreAt(centred) !== -1 && centreAt(centred) < barcodeAt(centred), 'align="center" centres it');
 assert.ok(contains(centred, [0x1d, 0x48, 0x02]), 'text prints the value below the bars');
 console.log('✓ <Barcode align text> → ESC a 1 before GS k, GS H 2');
+
+// --- <Barcode width>: narrow bars so a CODE128 invoice fits a 58mm roll ---
+// A 10-character CODE128 is ~145 modules: 435 dots at the default GS w 3,
+// wider than a 58mm printer's 384; width={1} (GS w 2) is ~290.
+assert.ok(contains(plainCode, [0x1d, 0x77, 0x03]), 'default module width is unchanged');
+const narrow = render(<Printer width={32}><Barcode value="INV-1001" width={1} /></Printer>);
+assert.ok(contains(narrow, [0x1d, 0x77, 0x02]), 'width={1} → GS w 2');
+console.log('✓ <Barcode width> → GS w');
