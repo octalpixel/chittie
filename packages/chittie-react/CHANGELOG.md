@@ -1,5 +1,13 @@
 # @angadie/chittie-react
 
+## 0.17.0
+
+### Minor Changes
+
+- Let `<Barcode>` set its bar width.
+
+  `width` (1–3, the encoder's scale; default 2) now reaches the encoder. At the default a 10-character CODE128 — a typical invoice number — is about 435 dots wide, more than a 58mm printer's 384, so it could not print on the most common roll. `width={1}` brings it to about 290.
+
 ## 0.16.0
 
 ### Minor Changes

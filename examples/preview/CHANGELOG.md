@@ -1,5 +1,12 @@
 # @angadie/example-preview
 
+## 0.0.22
+
+### Patch Changes
+
+- @angadie/chittie@0.5.15
+- @angadie/chittie-preview@0.9.0
+
 ## 0.0.21
 
 ### Patch Changes

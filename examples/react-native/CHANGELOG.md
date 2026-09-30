@@ -1,5 +1,11 @@
 # @angadie/example-react-native
 
+## 0.0.20
+
+### Patch Changes
+
+- @angadie/chittie@0.5.15
+
 ## 0.0.19
 
 ### Patch Changes
