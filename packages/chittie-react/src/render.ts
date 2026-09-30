@@ -37,6 +37,11 @@ export interface RenderOptions {
   rasterizer?: TextRasterizer;
   /** Code page used to decide what's encodable as text (default cp437). */
   codepage?: Codepage;
+  /**
+   * Line ending after every printed line. Default `'\n\r'` (Epson). Use `'\n'`
+   * for clones (e.g. N32G43x) that feed again on CR and print double-spaced.
+   */
+  newline?: '\n' | '\n\r';
 }
 
 /** Common thermal printer profiles: characters/line + printable dot width + resolution. */
@@ -58,7 +63,9 @@ export function render(element: ReactElement, options: RenderOptions = {}): Uint
   const dotWidth = options.dotWidth ?? columns * 12;
   const dpi = options.dpi ?? 203;
   const lineSpacing = props.lineSpacing ?? options.lineSpacing;
-  const encoder = new ReceiptPrinterEncoder({ columns });
+  const encoder = new ReceiptPrinterEncoder(
+    options.newline ? { columns, newline: options.newline } : { columns },
+  );
   encoder.initialize();
   if (lineSpacing !== undefined) encoder.lineSpacing(lineSpacing);
   walk(props.children, encoder, {

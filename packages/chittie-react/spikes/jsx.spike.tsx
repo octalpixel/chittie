@@ -226,3 +226,21 @@ const plainRow = render(<Printer width={32}><Row left="TOTAL" right="Rs. 600.00"
 const cellGap = (bytes: Uint8Array) => /TOTAL( +)Rs\./.exec(ascii(bytes))?.[1].length;
 assert.equal(cellGap(tallRow), cellGap(plainRow), 'magnifying a row does not change its column math');
 console.log('✓ <Row height> → GS ! vertical magnification, columns unchanged');
+
+// --- newline: LF-only for clone printers that feed again on CR ---
+// Epson-style LF CR stays the default; USB clones (e.g. N32G43x) treat the CR
+// as a second line feed, so every line prints double-spaced.
+const hasCrAfterLf = (bytes: Uint8Array) =>
+  Array.from(bytes).some((b, i, arr) => b === 0x0d && arr[i - 1] === 0x0a);
+const twoLines = (
+  <Printer width={32}>
+    <Text>first</Text>
+    <Text>second</Text>
+  </Printer>
+);
+assert.ok(hasCrAfterLf(render(twoLines)), 'default newline stays LF CR');
+const lfOnly = render(twoLines, { newline: '\n' });
+assert.ok(!hasCrAfterLf(lfOnly), "newline: '\\n' emits no CR after a line feed");
+const lineFeeds = (bytes: Uint8Array) => ascii(bytes).match(/\n/g)?.length;
+assert.equal(lineFeeds(lfOnly), lineFeeds(render(twoLines)), 'same number of line feeds');
+console.log("✓ render({ newline: '\\n' }) → LF-only line endings, default unchanged");
